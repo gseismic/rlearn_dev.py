@@ -18,7 +18,7 @@ def test_qac_basic():
         'optimizer': 'adam',
         'optimizer_kwargs': {'lr': 0.0003},
         'gamma': 0.99, # 明确指定gamma值
-        'lang': 'zh'
+        'lang': 'en'
     }
     
     agent = QACAgent(env, config=config)
@@ -54,10 +54,9 @@ def test_qac_basic():
     plt.xlabel('Episode')
     plt.ylabel('Total Reward')
     plt.savefig('training_rewards.png')
-    plt.show()
 
     # 使用新的测试函数
-    tr = Translator('zh')
+    tr = Translator(agent.lang)
     performance_stats = eval_agent_performance(agent, env, num_episodes=10)
     for key, value in performance_stats.items():
         print(f"{tr(key)}: {value}")
@@ -99,5 +98,6 @@ def load_model(env, model_path, num_episodes=10):
     print(f"Average reward over {num_episodes} episodes: {avg_reward}")
     return avg_reward
 
-if __name__ == "__test_qac_basic__":
+if __name__ == "__main__":
     test_qac_basic()
+    plt.show()

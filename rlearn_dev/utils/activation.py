@@ -4,7 +4,21 @@ ACTIVATIONS = {
     'relu': nn.ReLU,
     'tanh': nn.Tanh,
     'sigmoid': nn.Sigmoid,
-    'leaky_relu': nn.LeakyReLU
+    'leaky_relu': nn.LeakyReLU,
+    'softmax': nn.Softmax,
+    'elu': nn.ELU,
+    'selu': nn.SELU,
+    'gelu': nn.GELU,
+    'prelu': nn.PReLU,
+    'swish': nn.SiLU,  # Swish activation function is implemented as SiLU in PyTorch
+    'log_softmax': nn.LogSoftmax,
+    'hardshrink': nn.Hardshrink,
+    'hardsigmoid': nn.Hardsigmoid,
+    'hardtanh': nn.Hardtanh,
+    'softplus': nn.Softplus,
+    'softsign': nn.Softsign,
+    'tanhshrink': nn.Tanhshrink,
+    'threshold': nn.Threshold
 }
 
 def get_activation_class(activation, default='relu'):

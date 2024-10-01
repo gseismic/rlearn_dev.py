@@ -9,16 +9,13 @@ def eval_agent_performance(agent,
                            max_steps=1000, 
                            deterministic=False):
     """
-    测试agent的性能
+    测试agent的性能 | Test agent performance
     
-    参数:
-    - agent: 要测试的智能体
-    - env: 环境
-    - num_episodes: 测试的回合数
-    - max_steps: 每个回合的最大步数
+    Args:
+    - deterministic: 是否使用确定性策略 | Whether to use deterministic policy
     
-    返回:
-    - 包含性能统计信息的字典
+    Returns:
+    - 包含性能统计信息的字典 | Dictionary containing performance statistics
     """
     total_rewards = []
     episode_lengths = []

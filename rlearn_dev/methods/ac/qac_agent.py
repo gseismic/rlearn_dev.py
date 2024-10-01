@@ -1,11 +1,11 @@
 import torch
 import numpy as np
 from pathlib import Path
-from .base_agent import BaseAgent
-from .network.api import get_model
+from ...core.agent.main.online_agent import OnlineAgent
 from ...utils.optimizer import get_optimizer_class
+from .network.api import get_model
 
-class QACAgent(BaseAgent):
+class QACAgent(OnlineAgent):
     """基于TD约束的actor-critic QAC算法
     
     actor网络: 行动决策

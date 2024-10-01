@@ -29,13 +29,27 @@ class QACAgent(OnlineAgent):
         optimizer_kwargs = self.config.get('optimizer_kwargs', {'lr': 0.001})
         self.optimizer = optimizer_class(self.model.parameters(), **optimizer_kwargs)
 
-    def select_action(self, state):
+    def model_dict(self):
+        state = {
+            'config': self.config,
+            'model': self.model.state_dict(),
+            'optimizer': self.optimizer.state_dict(),
+        }
+        return state
+    
+    def load_model_dict(self, model_dict):
+        self.config = model_dict['config']
+        self.initialize()
+        self.model.load_state_dict(model_dict['model'])
+        self.optimizer.load_state_dict(model_dict['optimizer'])
+
+    def select_action(self, state): 
         state_tensor = torch.FloatTensor(state).unsqueeze(0)
         action_probs, _ = self.model(state_tensor)
         action = np.random.choice(len(action_probs.squeeze()), p=action_probs.detach().numpy().squeeze())
         return action
 
-    def step(self, state, action, reward, next_state, done):
+    def step(self, state, action, reward, next_state, done, *args, **kwargs):
         state_tensor = torch.FloatTensor(state).unsqueeze(0)
         next_state_tensor = torch.FloatTensor(next_state).unsqueeze(0)
         reward_tensor = torch.FloatTensor([reward])
@@ -69,19 +83,4 @@ class QACAgent(OnlineAgent):
                 'value': value.item()
             }
             return action, info
-
-    def save(self, path):
-        path = Path(path)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        torch.save({
-            'model_state_dict': self.model.state_dict(),
-            'optimizer_state_dict': self.optimizer.state_dict(),
-            'config': self.config
-        }, str(path))
-
-    def load(self, path):
-        checkpoint = torch.load(path)
-        self.config.update(checkpoint['config'])
-        self.initialize()
-        self.model.load_state_dict(checkpoint['model_state_dict'])
-        self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        

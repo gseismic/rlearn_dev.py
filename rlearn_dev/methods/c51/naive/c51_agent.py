@@ -42,7 +42,12 @@ class C51Agent(OnlineAgent):
         optimizer_kwargs = self.config.get('optimizer_kwargs', {'lr': 0.0003})
         self.optimizer = optimizer_class(self.policy_net.parameters(), **optimizer_kwargs)       
     
+    def before_learn(self):
+        print(self.config)
+        print(self.__dict__)
+    
     def select_action(self, state, epsilon=None):
+        epsilon = 0.1
         if epsilon is not None and np.random.random() < epsilon:
             # or: return self.env.action_space.sample()
             return np.random.randint(self.action_dim)

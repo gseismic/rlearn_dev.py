@@ -21,7 +21,7 @@ def test_c51_naive():
         'gamma': 0.99, # 明确指定gamma值
         'v_min': -10,
         'v_max': 10,
-        'buffer_size': 1000,
+        'buffer_size': 100,
         'batch_size': 32,
         'target_update_freq': 10,
     }
@@ -30,7 +30,7 @@ def test_c51_naive():
 
     # 创建学习参数字典
     learn_params = {
-        'max_episodes': 100,
+        'max_episodes': 500,
         'max_total_steps': 2000,
         'max_episode_steps': None,
         'max_runtime': None,

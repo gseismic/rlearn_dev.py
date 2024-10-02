@@ -39,7 +39,7 @@ def test_c51_naive():
     epsilon_start = 0.5
     epsilon_end = 0.01
     
-    if 0:
+    if 1:
         half_life = max_episodes//6 # decay (0.5)^(3)
         epsilon_scheduler_type = 'half_life'
         epsilon_scheduler_kwargs = {

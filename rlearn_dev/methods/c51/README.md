@@ -1,8 +1,10 @@
 # c51
 paper: 
 [A Distributional Perspective on Reinforcement Learning](https://arxiv.org/pdf/1707.06887)
-## 论文 | Papers
+## 论文 & 博客 | Papers & Blogs
 以下是一些与 C51 相关的论文，其中探讨了目标分布、插值方法以及其他相关主题：
+
+[Distributional Reinforcement Learning知乎blog](https://zhuanlan.zhihu.com/p/76786102)
 
 1. **C51: Categorical DQN**
    - **标题**: "C51: A Categorical DQN"

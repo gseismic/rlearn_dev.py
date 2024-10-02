@@ -49,12 +49,11 @@ class C51Agent(OnlineAgent):
         self.optimizer = optimizer_class(self.policy_net.parameters(), **optimizer_kwargs)       
     
     def before_learn(self):
-        print(self.config)
-        print(self.__dict__)
+        self.logger.debug(self.config)
+        self.logger.debug(self.__dict__)
     
     def select_action(self, state):
         epsilon = self.epsilon_scheduler.get_epsilon()
-        # print(f'** {epsilon=}')
         if epsilon is not None and np.random.random() < epsilon:
             # or: self.env.action_space.sample(), but need the seed ..etc, too complex
             return np.random.randint(self.action_dim)
@@ -123,10 +122,9 @@ class C51Agent(OnlineAgent):
             for target_param, policy_param in zip(self.target_net.parameters(), self.policy_net.parameters()):
                 target_param.data.copy_(tau * policy_param.data + (1.0 - tau) * target_param.data)  # 软更新
 
-        # v_max: r_max/(1 - gamma)
-        if i_episode % 10 == 0:
-            print(f' {self.epsilon_scheduler.get_epsilon()=}')
-            print(f'{len(episode_rewards)=}, {np.mean(episode_rewards)=}, {np.max(episode_rewards)=}, {np.min(episode_rewards)=}')
+        # if i_episode % 10 == 0:
+        #     print(f' {self.epsilon_scheduler.get_epsilon()=}')
+        #     print(f'{len(episode_rewards)=}, {np.mean(episode_rewards)=}, {np.max(episode_rewards)=}, {np.min(episode_rewards)=}')
     
     def predict(self, state, deterministic=True, out_probs=False):
         with torch.no_grad():
@@ -160,13 +158,6 @@ class C51Agent(OnlineAgent):
                     info['action_prob'] = action_prob
             
             return action, info
-    
-    def from_model_dict(self, model_dict):
-        self.config.update(model_dict['config'])
-        self.initialize()
-        self.policy_net.load_state_dict(model_dict['policy_net'])
-        self.target_net.load_state_dict(model_dict['target_net'])
-        self.optimizer.load_state_dict(model_dict['optimizer'])
    
     def model_dict(self):
         # 只保存与模型推理和训练相关的核心参数

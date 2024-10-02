@@ -26,7 +26,7 @@ def test_c51_naive():
     machine_eps = 1e-3
     env_episode_max_steps = 500
     gamma = np.exp(np.log(machine_eps)/env_episode_max_steps)
-    print(f"gamma: {gamma}")
+    print(f"**gamma**: {gamma}")
     v_max = 1/(1-gamma)*2
     v_min = -v_max
     replay_buffer_size = 10000

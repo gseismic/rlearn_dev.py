@@ -18,13 +18,15 @@ class C51Agent(OnlineAgent):
     """
 
     def initialize(self):
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.logger.info(f'Using device: {self.device}')
         self.state_dim = np.prod(self.env.observation_space.shape) # TODO: encoder
         self.action_dim = self.env.action_space.n
         self.num_atoms = self.config.get('num_atoms', 51)
         self.v_min = self.config.get('v_min', -10)
         self.v_max = self.config.get('v_max', 10)
         self.delta_z = (self.v_max - self.v_min) / (self.num_atoms - 1)
-        self.z = torch.linspace(self.v_min, self.v_max, self.num_atoms)
+        self.z = torch.linspace(self.v_min, self.v_max, self.num_atoms).to(self.device)
         self.gamma = self.config.get('gamma', 0.99)
         self.buffer_size = self.config.get('replay_buffer_capacity', 10000)
         self.replay_buffer = RandomReplayBuffer(capacity=self.buffer_size)
@@ -37,11 +39,11 @@ class C51Agent(OnlineAgent):
             **self.config.get('epsilon_scheduler_kwargs', {}))
         self.policy_net = get_model(self.state_dim, self.action_dim, self.num_atoms,
                                     model_type=self.config['model_type'],
-                                    model_kwargs=self.config['model_kwargs'])
+                                    model_kwargs=self.config['model_kwargs']).to(self.device)
     
         self.target_net = get_model(self.state_dim, self.action_dim, self.num_atoms,
                                     model_type=self.config['model_type'],
-                                    model_kwargs=self.config['model_kwargs'])
+                                    model_kwargs=self.config['model_kwargs']).to(self.device)
         self.target_net.load_state_dict(self.policy_net.state_dict())
         
         optimizer_class = get_optimizer_class(self.config.get('optimizer'), 'adam')
@@ -62,11 +64,9 @@ class C51Agent(OnlineAgent):
     
     def greedy_action(self, state):
         with torch.no_grad():
-            state = torch.FloatTensor(state).unsqueeze(0)  # shape: (1, state_dim)
-            distribution = self.policy_net(state)  # shape: (1, action_dim, num_atoms)
-            self.z = self.z.to(distribution.device)  
-            # self.z.unsqueeze(0).unsqueeze(0) shape: (1, 1, num_atoms)
-            expected_Q = (distribution * self.z.unsqueeze(0).unsqueeze(0)).sum(2)  # shape: (1, action_dim)
+            state = torch.FloatTensor(state).unsqueeze(0).to(self.device)
+            distribution = self.policy_net(state)
+            expected_Q = (distribution * self.z.unsqueeze(0).unsqueeze(0)).sum(2)
             return expected_Q.argmax(1).item()
 
     def step(self, state, action, reward, next_state, done, 
@@ -78,11 +78,11 @@ class C51Agent(OnlineAgent):
         batch = self.replay_buffer.sample(self.batch_size)
         state_batch, action_batch, reward_batch, next_state_batch, done_batch = zip(*batch)
         
-        state_batch = torch.FloatTensor(np.array(state_batch))
-        action_batch = torch.LongTensor(np.array(action_batch))
-        reward_batch = torch.FloatTensor(np.array(reward_batch))
-        next_state_batch = torch.FloatTensor(np.array(next_state_batch))
-        done_batch = torch.FloatTensor(np.array(done_batch))
+        state_batch = torch.FloatTensor(np.array(state_batch)).to(self.device)
+        action_batch = torch.LongTensor(np.array(action_batch)).to(self.device)
+        reward_batch = torch.FloatTensor(np.array(reward_batch)).to(self.device)
+        next_state_batch = torch.FloatTensor(np.array(next_state_batch)).to(self.device)
+        done_batch = torch.FloatTensor(np.array(done_batch)).to(self.device)
         
         with torch.no_grad():
             next_distribution = self.target_net(next_state_batch)
@@ -128,24 +128,21 @@ class C51Agent(OnlineAgent):
     
     def predict(self, state, deterministic=True, out_probs=False):
         with torch.no_grad():
-            state = torch.FloatTensor(state).unsqueeze(0)  # shape: (1, state_dim)
-            Q_distributions = self.policy_net(state)  # shape: (1, action_dim, num_atoms)
-            self.z = self.z.to(Q_distributions.device)  # 确保z在正确的设备上
-            # self.z.unsqueeze(0).unsqueeze(0) shape: (1, 1, num_atoms)
-            expected_Qs = (Q_distributions * self.z.unsqueeze(0).unsqueeze(0)).sum(2)  # shape: (1, action_dim)
+            state = torch.FloatTensor(state).unsqueeze(0).to(self.device)
+            Q_distributions = self.policy_net(state)
+            expected_Qs = (Q_distributions * self.z.unsqueeze(0).unsqueeze(0)).sum(2)
             
             info = {
-                'Q_values': expected_Qs,
-                'Q_distributions': Q_distributions,
+                'Q_values': expected_Qs.cpu(),
+                'Q_distributions': Q_distributions.cpu(),
             }
             if deterministic:
                 action = expected_Qs.argmax(1).item()
                 if out_probs:
-                    probs = expected_Qs.softmax(dim=1).squeeze().tolist()
+                    probs = expected_Qs.softmax(dim=1).squeeze().cpu().tolist()
                     info['action_probs'] = probs
                     info['action_prob'] = probs[action]
             else:
-                # print(expected_Qs)
                 probs = expected_Qs.softmax(dim=1).squeeze()
                 dist = Categorical(probs=probs)
                 action = dist.sample().item()
@@ -154,7 +151,7 @@ class C51Agent(OnlineAgent):
                 # action = np.random.choice(len(probs), p=probs) 
                 # [9.969103848561645e-05, 0.9999003410339355], ValueError: probabilities do not sum to 1
                 if out_probs:
-                    info['action_probs'] = probs.tolist()
+                    info['action_probs'] = probs.cpu().tolist()
                     info['action_prob'] = action_prob
             
             return action, info

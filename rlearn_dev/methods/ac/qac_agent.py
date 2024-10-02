@@ -16,6 +16,8 @@ class QACAgent(OnlineAgent):
         super().__init__(env, config, logger=logger, seed=seed)
     
     def initialize(self):
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.logger.info(f'Using device: {self.device}')
         if 'gamma' not in self.config:
             raise ValueError("`gamma` is not set")
         self.gamma = self.config['gamma']
@@ -23,7 +25,7 @@ class QACAgent(OnlineAgent):
         action_dim = self.env.action_space.n
         self.model = get_model(state_dim, action_dim, 
                                model_type=self.config['model_type'],
-                               model_kwargs=self.config['model_kwargs'])
+                               model_kwargs=self.config['model_kwargs']).to(self.device)
         
         optimizer_class = get_optimizer_class(self.config.get('optimizer'), 'adam') 
         optimizer_kwargs = self.config.get('optimizer_kwargs', {'lr': 0.001})
@@ -44,16 +46,16 @@ class QACAgent(OnlineAgent):
         self.optimizer.load_state_dict(model_dict['optimizer'])
 
     def select_action(self, state): 
-        state_tensor = torch.FloatTensor(state).unsqueeze(0)
+        state_tensor = torch.FloatTensor(state).unsqueeze(0).to(self.device)
         action_probs, _ = self.model(state_tensor)
-        action = np.random.choice(len(action_probs.squeeze()), p=action_probs.detach().numpy().squeeze())
+        action = np.random.choice(len(action_probs.squeeze()), p=action_probs.cpu().detach().numpy().squeeze())
         return action
 
     def step(self, state, action, reward, next_state, done, *args, **kwargs):
-        state_tensor = torch.FloatTensor(state).unsqueeze(0)
-        next_state_tensor = torch.FloatTensor(next_state).unsqueeze(0)
-        reward_tensor = torch.FloatTensor([reward])
-        done_tensor = torch.FloatTensor([float(done)])
+        state_tensor = torch.FloatTensor(state).unsqueeze(0).to(self.device)
+        next_state_tensor = torch.FloatTensor(next_state).unsqueeze(0).to(self.device)
+        reward_tensor = torch.FloatTensor([reward]).to(self.device)
+        done_tensor = torch.FloatTensor([float(done)]).to(self.device)
         
         _, value = self.model(state_tensor)
         _, next_value = self.model(next_state_tensor)
@@ -72,15 +74,15 @@ class QACAgent(OnlineAgent):
 
     def predict(self, state, deterministic=False):
         with torch.no_grad():
-            state_tensor = torch.FloatTensor(state).unsqueeze(0)
+            state_tensor = torch.FloatTensor(state).unsqueeze(0).to(self.device)
             action_probs, value = self.model(state_tensor)
             if deterministic:
                 action = action_probs.argmax().item()
             else:
-                action = np.random.choice(len(action_probs.squeeze()), p=action_probs.detach().numpy().squeeze())
+                action = np.random.choice(len(action_probs.squeeze()), p=action_probs.cpu().detach().numpy().squeeze())
             info = {
-                'action_probs': action_probs.squeeze().tolist(),
-                'value': value.item()
+                'action_probs': action_probs.cpu().squeeze().tolist(),
+                'value': value.cpu().item()
             }
             return action, info
         

@@ -25,7 +25,7 @@ def test_qac_basic():
 
     # 创建学习参数字典
     learn_params = {
-        'max_episodes': 100,
+        'max_episodes': 500,
         'max_total_steps': 2000,
         'max_episode_steps': None,
         'max_runtime': None,

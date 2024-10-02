@@ -183,7 +183,7 @@ class OnlineAgent(ABC):
                 break
 
             if exit_monitor.episode_count % verbose_freq == 0:
-                self.logger.info(f"Episode {exit_monitor.episode_count}: {tr('total_reward')}: {episode_reward}")
+                self.logger.info(f"Episode {exit_monitor.episode_count}/{max_episodes}: {tr('total_reward')}: {episode_reward}")
 
             if checkpoint_freq and exit_monitor.episode_count % checkpoint_freq == 0:
                 checkpoint_file = Path(checkpoint_path) / f'checkpoint_episode_{exit_monitor.episode_count}.pth'

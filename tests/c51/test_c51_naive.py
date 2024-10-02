@@ -4,11 +4,36 @@ from rlearn_dev.methods.c51.naive import C51Agent
 from rlearn_dev.utils.eval_agent import eval_agent_performance
 from rlearn_dev.utils.i18n import Translator
 from pathlib import Path
+import numpy as np
 
 def test_c51_naive():
     env = gym.make("CartPole-v1")
     
+    # 策略可能失败
+    # Key params:
+    # buffer_size, target_update_freq
+    # 可能原因:
+    #   (1) 过早放弃探索没有优先级，可能产生恶性循环
+    #   (2) 过小的replay, buffer_size大小
+    #   (3) 过快的target_update_freq
+    # half_life 
+    #
+    max_episodes = 1500
     # 使用混合类型配置
+    # gamma = 0.9 # bad, becasue 0.9**500 = 1.322070819480823e-23
+    # gamma = 0.99 # 
+    # 确保env_episode_max_steps内，单步reward不衰减到机器精度
+    machine_eps = 1e-6
+    env_episode_max_steps = 500
+    gamma = np.exp(np.log(machine_eps)/env_episode_max_steps)
+    print(f"gamma: {gamma}")
+    v_max = 1/(1-gamma)*2
+    v_min = -v_max
+    replay_buffer_size = 10000
+    batch_size = replay_buffer_size // 100
+    target_update_freq = 1000 # larger is more stable
+    epsilon_start = 0.5
+    half_life = max_episodes//6 # decay (0.5)^(3)
     config = {
         'model_type': 'C51MLP',
         'model_kwargs': {
@@ -18,19 +43,24 @@ def test_c51_naive():
         'num_atoms': 51,
         'optimizer': 'adam',
         'optimizer_kwargs': {'lr': 0.0003},
-        'gamma': 0.99, # 明确指定gamma值
-        'v_min': -10,
-        'v_max': 10,
-        'buffer_size': 100,
-        'batch_size': 32,
-        'target_update_freq': 10,
+        'gamma': gamma, # 明确指定gamma值
+        'v_min': v_min,
+        'v_max': v_max,
+        'buffer_size': replay_buffer_size,
+        'batch_size': batch_size,
+        'target_update_freq': target_update_freq,
+        'epsilon_scheduler_type': 'half_life',
+        'epsilon_scheduler_kwargs': {
+            'epsilon_start': epsilon_start,
+            'epsilon_end': 0.01,
+            'half_life': half_life,
+        }
     }
     
     agent = C51Agent(env, config=config)
 
-    # 创建学习参数字典
     learn_params = {
-        'max_episodes': 500,
+        'max_episodes': max_episodes,
         'max_total_steps': 2000,
         'max_episode_steps': None,
         'max_runtime': None,
@@ -52,7 +82,6 @@ def test_c51_naive():
 
     print(f"Final model saved at: {training_info['final_model_path']}")
 
-    # 绘制训练过程中的奖励
     plt.figure(figsize=(10, 5))
     plt.plot(training_info['rewards_history'])
     plt.title('Training Reward')
@@ -60,7 +89,6 @@ def test_c51_naive():
     plt.ylabel('Total Reward')
     plt.savefig('training_rewards.png')
 
-    # 使用新的测试函数
     tr = Translator(agent.lang)
     performance_stats = eval_agent_performance(agent, env, num_episodes=10)
     for key, value in performance_stats.items():
@@ -68,7 +96,6 @@ def test_c51_naive():
 
     env.close()
 
-    # 测试加载的模型
     load_model(env, training_info['final_model_path'])
 
 def load_model(env, model_path, num_episodes=10):

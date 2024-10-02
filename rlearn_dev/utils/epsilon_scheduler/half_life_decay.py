@@ -12,4 +12,7 @@ class HalfLifeDecay(DecayStrategy):
         self.current_step += 1
 
     def get_epsilon(self, epsilon_start, epsilon_end):
-        return epsilon_end + (epsilon_start - epsilon_end) * (0.5 ** (self.current_step / self.half_life))
+        # print(self.current_step, f'{self.current_step / self.half_life}, {epsilon_start=}, {epsilon_end=}')
+        epsilon =  epsilon_end + (epsilon_start - epsilon_end) * (0.5 ** (self.current_step / self.half_life))
+        # print(f'epsilon: {epsilon}')
+        return epsilon

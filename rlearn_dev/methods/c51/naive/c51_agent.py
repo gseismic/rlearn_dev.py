@@ -6,6 +6,7 @@ from ....utils.optimizer import get_optimizer_class
 from ....utils.replay_buffer import RandomReplayBuffer
 from .network.api import get_model
 from torch.distributions import Categorical
+from ....utils.epsilon_scheduler.api import get_scheduler
 
 class C51Agent(OnlineAgent):
     """
@@ -29,6 +30,9 @@ class C51Agent(OnlineAgent):
         self.replay_buffer = RandomReplayBuffer(capacity=self.buffer_size)
         self.batch_size = self.config.get('batch_size', 32)
         self.target_update_freq = self.config.get('target_update_freq', 10)
+        self.epsilon_scheduler = get_scheduler(
+            scheduler_type=self.config['epsilon_scheduler_type'],
+            **self.config.get('epsilon_scheduler_kwargs', {}))
         self.policy_net = get_model(self.state_dim, self.action_dim, self.num_atoms,
                                     model_type=self.config['model_type'],
                                     model_kwargs=self.config['model_kwargs'])
@@ -46,22 +50,26 @@ class C51Agent(OnlineAgent):
         print(self.config)
         print(self.__dict__)
     
-    def select_action(self, state, epsilon=None):
-        epsilon = 0.1
+    def select_action(self, state):
+        epsilon = self.epsilon_scheduler.get_epsilon()
+        # print(f'** {epsilon=}')
         if epsilon is not None and np.random.random() < epsilon:
-            # or: return self.env.action_space.sample()
+            # or: self.env.action_space.sample(), but need the seed ..etc, too complex
             return np.random.randint(self.action_dim)
         else:
-            with torch.no_grad():
-                state = torch.FloatTensor(state).unsqueeze(0)  # shape: (1, state_dim)
-                distribution = self.policy_net(state)  # shape: (1, action_dim, num_atoms)
-                self.z = self.z.to(distribution.device)  # 确保z在正确的设备上
-                # 各动作的期望 Q(s, a) := E[Z(s, a)]
-                expected_Q = (distribution * self.z.unsqueeze(0).unsqueeze(0)).sum(2)  # shape: (1, action_dim)
-                # self.z.unsqueeze(0).unsqueeze(0) shape: (1, 1, num_atoms)
-                return expected_Q.argmax(1).item()  # 返回一个标量值
+            return self.greedy_action(state)
+    
+    def greedy_action(self, state):
+        with torch.no_grad():
+            state = torch.FloatTensor(state).unsqueeze(0)  # shape: (1, state_dim)
+            distribution = self.policy_net(state)  # shape: (1, action_dim, num_atoms)
+            self.z = self.z.to(distribution.device)  
+            # self.z.unsqueeze(0).unsqueeze(0) shape: (1, 1, num_atoms)
+            expected_Q = (distribution * self.z.unsqueeze(0).unsqueeze(0)).sum(2)  # shape: (1, action_dim)
+            return expected_Q.argmax(1).item()
 
-    def step(self, state, action, reward, next_state, done, episode_steps, total_steps):
+    def step(self, state, action, reward, next_state, done, 
+             episode_steps, total_steps, *args, **kwargs):
         self.replay_buffer.add(state, action, reward, next_state, done)
         if len(self.replay_buffer) < self.batch_size:
             return
@@ -105,6 +113,13 @@ class C51Agent(OnlineAgent):
         if total_steps % self.target_update_freq == 0:
             self.target_net.load_state_dict(self.policy_net.state_dict())
 
+    def after_episode(self, i_episode, episode_rewards):
+        self.epsilon_scheduler.step()
+        # v_max: r_max/(1 - gamma)
+        if i_episode % 10 == 0:
+            print(f' {self.epsilon_scheduler.get_epsilon()=}')
+            print(f'{len(episode_rewards)=}, {np.mean(episode_rewards)=}, {np.max(episode_rewards)=}, {np.min(episode_rewards)=}')
+    
     def predict(self, state, deterministic=True, out_probs=False):
         with torch.no_grad():
             state = torch.FloatTensor(state).unsqueeze(0)  # shape: (1, state_dim)
@@ -124,12 +139,12 @@ class C51Agent(OnlineAgent):
                     info['action_probs'] = probs
                     info['action_prob'] = probs[action]
             else:
-                print(expected_Qs)
+                # print(expected_Qs)
                 probs = expected_Qs.softmax(dim=1).squeeze()
                 dist = Categorical(probs=probs)
                 action = dist.sample().item()
                 action_prob = probs[action].item()
-                print(f'probs: {probs}', f'action: {action}: {action_prob}')
+                # print(f'probs: {probs}', f'action: {action}: {action_prob}')
                 # action = np.random.choice(len(probs), p=probs) 
                 # [9.969103848561645e-05, 0.9999003410339355], ValueError: probabilities do not sum to 1
                 if out_probs:

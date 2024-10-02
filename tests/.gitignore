@@ -1,1 +1,4 @@
 *.png
+*.pth
+*.pkl
+*.sqlite3

@@ -47,6 +47,12 @@ class OnlineAgent(ABC):
     def before_learn(self):
         pass
     
+    def before_episode(self):
+        pass
+    
+    def after_episode(self, i_episode, episode_rewards):
+        pass
+    
     def after_learn(self):
         pass
     
@@ -144,14 +150,17 @@ class OnlineAgent(ABC):
         while True:
             state, _ = self.env.reset()
             trajectory_recorder.start_episode(state)
+            episode_rewards = []
             episode_reward = 0
             episode_steps = 0
 
+            self.before_episode()
             while True:
                 action = self.select_action(state)
                 next_state, reward, done, truncated, info = self.env.step(action)
                 trajectory_recorder.record_step(state, action, next_state, reward, done, truncated, info)
                 episode_reward += reward
+                episode_rewards.append(reward)
                 episode_steps += 1
                 total_steps += 1
                 
@@ -162,10 +171,11 @@ class OnlineAgent(ABC):
 
                 if done or truncated or (max_episode_steps and episode_steps >= max_episode_steps):
                     break
-
+                
             trajectory_recorder.end_episode()
             rewards_history.append(episode_reward)
             episode_lengths.append(episode_steps)
+            self.after_episode(exit_monitor.episode_count, episode_rewards)
             should_exit, exit_reason = exit_monitor.should_exit(episode_reward)
             
             if should_exit:

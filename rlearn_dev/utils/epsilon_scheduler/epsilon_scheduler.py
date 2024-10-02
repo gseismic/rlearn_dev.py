@@ -3,7 +3,6 @@ from .exponential_decay import ExponentialDecay
 from .half_life_decay import HalfLifeDecay
 from .time_decay import TimeDecay
 from .step_decay import StepDecay
-from .constant_decay import ConstantDecay
 from .custom_decay import CustomDecay
 import numpy as np
 
@@ -15,6 +14,7 @@ class EpsilonScheduler:
         cls.registered_schedulers[name] = scheduler_cls
 
     def __init__(self, epsilon_start, epsilon_end, scheduler_type='linear', **kwargs):
+        assert epsilon_start > epsilon_end, 'epsilon_start must be greater than epsilon_end'
         self.epsilon_start = epsilon_start
         self.epsilon_end = epsilon_end
         if scheduler_type in self.registered_schedulers:
@@ -41,9 +41,6 @@ class EpsilonScheduler:
         elif scheduler_type == 'step_decay':
             total_steps = kwargs.get('total_steps', 10000)
             self.decay_strategy = StepDecay(total_steps)
-        elif scheduler_type == 'constant_decay':
-            epsilon_value = kwargs.get('epsilon_value', 0.1)
-            self.decay_strategy = ConstantDecay(epsilon_value)
         else:
             raise ValueError(f'Unknown scheduler type: {scheduler_type}')
         self.decay_strategy.start()
@@ -53,4 +50,4 @@ class EpsilonScheduler:
 
     def get_epsilon(self):
         epsilon = self.decay_strategy.get_epsilon(self.epsilon_start, self.epsilon_end)
-        return np.clip(epsilon, self.epsilon_start, self.epsilon_end)
+        return np.clip(epsilon, self.epsilon_end, self.epsilon_start)

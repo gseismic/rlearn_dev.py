@@ -97,8 +97,10 @@ class C51Agent(OnlineAgent):
             u = b.ceil().long()
             # u = (l == u).long() + u # in case of b == l == u
 
-            target_distribution = torch.zeros_like(next_distribution)
-            offset = torch.linspace(0, (self.batch_size - 1) * self.num_atoms, self.batch_size).long().unsqueeze(1).expand(self.batch_size, self.num_atoms)
+            target_distribution = torch.zeros_like(next_distribution, device=self.device)
+            offset = torch.linspace(0, (self.batch_size - 1) * self.num_atoms,
+                                    self.batch_size).long().unsqueeze(1).expand(self.batch_size, 
+                                                                                self.num_atoms).to(self.device)
 
             target_distribution.view(-1).index_add_(0, (l + offset).view(-1), (next_distribution * (u.float() - b)).view(-1))
             target_distribution.view(-1).index_add_(0, (u + offset).view(-1), (next_distribution * (b - l.float())).view(-1))

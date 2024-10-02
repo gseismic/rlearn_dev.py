@@ -29,7 +29,9 @@ class C51Agent(OnlineAgent):
         self.buffer_size = self.config.get('replay_buffer_capacity', 10000)
         self.replay_buffer = RandomReplayBuffer(capacity=self.buffer_size)
         self.batch_size = self.config.get('batch_size', 32)
-        self.target_update_freq = self.config.get('target_update_freq', 10)
+        self.target_hard_update = self.config.get('target_hard_update', False)
+        self.target_hard_update_freq = self.config.get('target_hard_update_freq', 10)
+        self.target_soft_update_tau = self.config.get('target_soft_update_tau', 0.01)
         self.epsilon_scheduler = get_scheduler(
             scheduler_type=self.config['epsilon_scheduler_type'],
             **self.config.get('epsilon_scheduler_kwargs', {}))
@@ -110,11 +112,17 @@ class C51Agent(OnlineAgent):
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
-        if total_steps % self.target_update_freq == 0:
-            self.target_net.load_state_dict(self.policy_net.state_dict())
 
     def after_episode(self, i_episode, episode_rewards):
         self.epsilon_scheduler.step()
+        if self.target_hard_update:
+            if i_episode % self.target_hard_update_freq == 0:
+                self.target_net.load_state_dict(self.policy_net.state_dict())  # 硬更新
+        else:
+            tau = self.target_soft_update_tau # default 0.005
+            for target_param, policy_param in zip(self.target_net.parameters(), self.policy_net.parameters()):
+                target_param.data.copy_(tau * policy_param.data + (1.0 - tau) * target_param.data)  # 软更新
+
         # v_max: r_max/(1 - gamma)
         if i_episode % 10 == 0:
             print(f' {self.epsilon_scheduler.get_epsilon()=}')

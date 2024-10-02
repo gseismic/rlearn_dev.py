@@ -11,29 +11,54 @@ def test_c51_naive():
     
     # 策略可能失败
     # Key params:
-    # buffer_size, target_update_freq
+    # buffer_size, target_hard_update_freq
     # 可能原因:
     #   (1) 过早放弃探索没有优先级，可能产生恶性循环
     #   (2) 过小的replay, buffer_size大小
-    #   (3) 过快的target_update_freq
+    #   (3) 过快的target_hard_update_freq
     # half_life 
     #
-    max_episodes = 1500
+    max_episodes = 1000
     # 使用混合类型配置
     # gamma = 0.9 # bad, becasue 0.9**500 = 1.322070819480823e-23
     # gamma = 0.99 # 
     # 确保env_episode_max_steps内，单步reward不衰减到机器精度
-    machine_eps = 1e-6
+    machine_eps = 1e-3
     env_episode_max_steps = 500
     gamma = np.exp(np.log(machine_eps)/env_episode_max_steps)
     print(f"gamma: {gamma}")
     v_max = 1/(1-gamma)*2
     v_min = -v_max
     replay_buffer_size = 10000
-    batch_size = replay_buffer_size // 100
-    target_update_freq = 1000 # larger is more stable
+    batch_size = 32 # replay_buffer_size // 100
+    # episode freq
+    target_hard_update = True
+    target_hard_update_freq = 10 #  larger is more stable
+    target_soft_update_tau = 0.2
+    
     epsilon_start = 0.5
-    half_life = max_episodes//6 # decay (0.5)^(3)
+    epsilon_end = 0.01
+    
+    if 0:
+        half_life = max_episodes//6 # decay (0.5)^(3)
+        epsilon_scheduler_type = 'half_life'
+        epsilon_scheduler_kwargs = {
+            'epsilon_start': epsilon_start,
+            'epsilon_end': epsilon_end,
+            'half_life': half_life,
+        }
+    if 0:
+        half_life = max_episodes//6 # decay (0.5)^(3)
+        cycle_steps = half_life//2
+        epsilon_scheduler_type = 'half_life_cycle'
+        epsilon_scheduler_kwargs = {
+            'epsilon_start': epsilon_start,
+            'epsilon_end': epsilon_end,
+            'half_life': half_life,
+            'cycle_epsilon': 0.05,
+            'cycle_steps': cycle_steps,
+        }
+    
     config = {
         'model_type': 'C51MLP',
         'model_kwargs': {
@@ -42,19 +67,17 @@ def test_c51_naive():
         },
         'num_atoms': 51,
         'optimizer': 'adam',
-        'optimizer_kwargs': {'lr': 0.0003},
+        'optimizer_kwargs': {'lr': 0.001},
         'gamma': gamma, # 明确指定gamma值
         'v_min': v_min,
         'v_max': v_max,
         'buffer_size': replay_buffer_size,
         'batch_size': batch_size,
-        'target_update_freq': target_update_freq,
-        'epsilon_scheduler_type': 'half_life',
-        'epsilon_scheduler_kwargs': {
-            'epsilon_start': epsilon_start,
-            'epsilon_end': 0.01,
-            'half_life': half_life,
-        }
+        'target_hard_update': target_hard_update,
+        'target_soft_update_tau': target_soft_update_tau,
+        'target_hard_update_freq': target_hard_update_freq,
+        'epsilon_scheduler_type': epsilon_scheduler_type,
+        'epsilon_scheduler_kwargs': epsilon_scheduler_kwargs
     }
     
     agent = C51Agent(env, config=config)

@@ -1,6 +1,6 @@
-from .linear_decay import LinearDecay
-from .exponential_decay import ExponentialDecay
-from .half_life_decay import HalfLifeDecay
+from .linear_decay import LinearDecay, LinearCycleDecay
+from .exponential_decay import ExponentialDecay, ExponentialCycleDecay
+from .half_life_decay import HalfLifeDecay, HalfLifeCycleDecay
 from .time_decay import TimeDecay
 from .step_decay import StepDecay
 from .custom_decay import CustomDecay
@@ -28,12 +28,27 @@ class EpsilonScheduler:
         elif scheduler_type == 'linear':
             total_steps = kwargs.get('total_steps', 10000)
             self.decay_strategy = LinearDecay(total_steps)
+        elif scheduler_type == 'linear_cycle':
+            total_steps = kwargs.get('total_steps', 10000)
+            cycle_epsilon = kwargs.get('cycle_epsilon', 0.1)
+            cycle_steps = kwargs.get('cycle_steps', 1000)
+            self.decay_strategy = LinearCycleDecay(total_steps, cycle_epsilon, cycle_steps)
         elif scheduler_type == 'exponential':
             decay_rate = kwargs.get('decay_rate', 0.01)
             self.decay_strategy = ExponentialDecay(decay_rate)
+        elif scheduler_type == 'exponential_cycle':
+            decay_rate = kwargs.get('decay_rate', 0.01)
+            cycle_epsilon = kwargs.get('cycle_epsilon', 0.1)
+            cycle_steps = kwargs.get('cycle_steps', 1000)
+            self.decay_strategy = ExponentialCycleDecay(decay_rate, cycle_epsilon, cycle_steps)
         elif scheduler_type == 'half_life':
             half_life = kwargs.get('half_life', 1000)
             self.decay_strategy = HalfLifeDecay(half_life)
+        elif scheduler_type == 'half_life_cycle':
+            half_life = kwargs['half_life']
+            cycle_epsilon = kwargs.get('cycle_epsilon', 0.1)
+            cycle_steps = kwargs.get('cycle_steps', half_life//2)
+            self.decay_strategy = HalfLifeCycleDecay(half_life, cycle_epsilon, cycle_steps)
         elif scheduler_type == 'time_decay':
             decay_rate = kwargs.get('decay_rate', None)
             half_life = kwargs.get('half_life', None)

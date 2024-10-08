@@ -31,6 +31,10 @@ dictionary = {
         'zh': '测试用时(秒)',
         'en': 'Test Duration (s)',
     },
+    'exit_reason': {
+        'zh': '退出原因',
+        'en': 'Exit Reason',
+    },
     'total_reward': {
         'zh': '总奖励',
         'en': 'Total Reward',

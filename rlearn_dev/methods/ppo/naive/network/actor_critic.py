@@ -11,21 +11,21 @@ def layer_init(layer, std=np.sqrt(2), bias_const=0.0):
 
 # from https://github.com/vwxyzjn/cleanrl/blob/master/cleanrl/ppo.py
 class ActorCritic(nn.Module):
-    def __init__(self, envs):
+    def __init__(self, state_dim, action_dim):
         super().__init__()
         self.critic = nn.Sequential(
-            layer_init(nn.Linear(np.array(envs.single_observation_space.shape).prod(), 64)),
+            layer_init(nn.Linear(np.array(state_dim).prod(), 64)),
             nn.Tanh(),
             layer_init(nn.Linear(64, 64)),
             nn.Tanh(),
             layer_init(nn.Linear(64, 1), std=1.0),
         )
         self.actor = nn.Sequential(
-            layer_init(nn.Linear(np.array(envs.single_observation_space.shape).prod(), 64)),
+            layer_init(nn.Linear(np.array(state_dim).prod(), 64)),
             nn.Tanh(),
             layer_init(nn.Linear(64, 64)),
             nn.Tanh(),
-            layer_init(nn.Linear(64, envs.single_action_space.n), std=0.01),
+            layer_init(nn.Linear(64, action_dim), std=0.01),
         )
 
     def get_value(self, x):

@@ -2,7 +2,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.distributions.categorical import Categorical
 import gymnasium as gym
 # from .network import get_actor_model, get_critic_model
 from ....core.agent.main.online_agent_ve import OnlineAgentVE
@@ -20,7 +19,7 @@ class PPOAgent(OnlineAgentVE):
         
         # algo
         self.learning_rate = self.config.get('learning_rate', 2.5e-4)
-        self.anneal_lr = self.config.get('anneal_lr', True)
+        self.anneal_lr = self.config.get('anneal_lr', True) 
         self.gamma = self.config.get('gamma', 0.99)
         self.gae_lambda = self.config.get('gae_lambda', 0.95) 
         self.num_minibatches = self.config.get('num_minibatches', 4)
@@ -43,8 +42,9 @@ class PPOAgent(OnlineAgentVE):
         
         self.device = torch.device("cuda" if torch.cuda.is_available() and self.config.get('cuda', True) else "cpu")
         assert isinstance(self.single_action_space, gym.spaces.Discrete), "only discrete action space is supported"
-        self.actor_critic = ActorCritic(self.env)
+        self.actor_critic = ActorCritic(self.env.observation_space.shape, self.env.action_space.n).to(self.device)
         self.optimizer = optim.Adam(self.actor_critic.parameters(), lr=self.learning_rate, eps=self.optimizer_eps)
+        self.logger.info(f'config: {self.config}')
         # self.actor = get_actor_model(env, model_type='MLPActor').to(self.device)
         # self.critic = get_critic_model(env, model_type='MLPCritic').to(self.device)
         # self.optimizer = optim.Adam(list(self.actor.parameters()) + list(self.critic.parameters()), lr=config.learning_rate)
@@ -58,6 +58,7 @@ class PPOAgent(OnlineAgentVE):
         self.batch_size = int(self.num_envs * steps_per_epoch)
         self.minibatch_size = int(self.batch_size // self.num_minibatches)
         # self.num_iterations = self.total_timesteps // self.batch_size
+        print(f'{self.batch_size=}, {self.minibatch_size=}')
     
         # storage
         self.obs = torch.zeros((steps_per_epoch, num_envs) + self.single_observation_space.shape).to(self.device)
@@ -70,10 +71,16 @@ class PPOAgent(OnlineAgentVE):
         # var for single step
         self.next_obs = torch.Tensor(states).to(self.device) # (num_envs, *obs_shape)
         self.next_done = torch.zeros(self.num_envs).to(self.device)
+        
+        # print(f'{self.next_obs.shape=}')
+        # print(f'{self.next_done.shape=}')
+        self.logger.debug(f'reset: states: {states}')
+        self.logger.debug(f'reset: infos: {infos}')
     
     def before_episode(self, epoch, **kwargs):
+        print(f'**{epoch=}')
         if self.anneal_lr:
-            frac = 1.0 - (epoch - 1.0) / self.max_epochs
+            frac = 1.0 - epoch / self.max_epochs
             lrnow = frac * self.learning_rate
             self.optimizer.param_groups[0]["lr"] = lrnow
     
@@ -83,7 +90,9 @@ class PPOAgent(OnlineAgentVE):
         self.obs[epoch_step] = self.next_obs
         self.dones[epoch_step] = self.next_done
         
-        print(f'{self.next_obs.shape, state.shape = }')
+        # print(f'{state=}')
+        # print(f'{self.next_obs=}')
+        # print(f'{self.next_obs.shape, state.shape = }')
         assert np.allclose(self.next_obs.cpu().numpy(), state)
 
         # ALGO LOGIC: action logic
@@ -91,14 +100,14 @@ class PPOAgent(OnlineAgentVE):
         with torch.no_grad():
             # action: (num_envs, action_dim)
             action, logprob, _, value = self.actor_critic.get_action_and_value(self.next_obs, compute_entropy=False)
-            # value: (num_envs, )
+            # value: (num_envs, 1)
+            assert value.shape == (self.num_envs, 1)
             self.values[epoch_step] = value.flatten()
         
-        print(f'{action.shape, logprob.shape, value.shape = }')
+        # print(f'{action.shape, logprob.shape, value.shape = }')
         assert action.shape == (self.num_envs, )
         assert logprob.shape == (self.num_envs, )
-        assert value.shape == (self.num_envs, )
-        
+ 
         self.actions[epoch_step] = action
         self.logprobs[epoch_step] = logprob
         # required by: env.step
@@ -107,15 +116,19 @@ class PPOAgent(OnlineAgentVE):
     def step(self, next_obs, rewards, terminates, truncates, 
              infos, epoch, epoch_step):
         next_done = np.logical_or(terminates, truncates)
-        print(f'{next_done.shape, next_done.dtype=}')
-        print(f'{next_obs.shape, rewards.shape=}')
-        # TODO ? view(-1)
-        self.rewards[epoch_step] = torch.tensor(rewards).to(self.device).view(-1)
+        print(f'\t**step: {epoch=}, {epoch_step=}: {rewards=}')
+        # print(f'{next_done.shape, next_done.dtype=}')
+        # print(f'{next_obs.shape, rewards.shape=}')
+        assert rewards.shape == (self.num_envs, )
+
+        self.rewards[epoch_step] = torch.tensor(rewards).to(self.device) # removed: .view(-1)
         self.next_obs, self.next_done = torch.Tensor(next_obs).to(self.device), torch.Tensor(next_done).to(self.device)
-    
-    def after_episode(self, epoch):
+        # print(f'**{next_done.shape, next_done.dtype=}')
+            
+    def after_episode(self, epoch, episode_reward, **kwargs):
         # self.next_obs, self.next_done := env.step后的结果
         # bootstrap value if not done
+        self.logger.debug(f'**{epoch=}: {episode_reward=}')
         should_exit = False
         device = self.device
         obs, actions, rewards, dones, values, logprobs = self.obs, self.actions, self.rewards, self.dones, self.values, self.logprobs
@@ -125,8 +138,8 @@ class PPOAgent(OnlineAgentVE):
             #  - advantages: GAE_advantage
             #  - returns: GAE_advantage + values
             # value: predicted return
+            # next_value: shape: (1, num_envs)
             next_value = self.actor_critic.get_value(next_obs).reshape(1, -1)
-            print(f'{next_value.shape=}')
             advantages = torch.zeros_like(rewards).to(device) # shape: (steps_per_epoch, num_envs)
             lastgaelam = 0
             gamma = self.gamma
@@ -142,6 +155,10 @@ class PPOAgent(OnlineAgentVE):
                 advantages[t] = lastgaelam = delta + gamma * gae_lambda * nextnonterminal * lastgaelam
             returns = advantages + values
 
+        # print(f'{values=}')
+        # print(f'{advantages=}')
+        # print(f'{returns=}')
+
         # flatten the batch
         b_obs = obs.reshape((-1,) + self.env.single_observation_space.shape)
         b_logprobs = logprobs.reshape(-1)
@@ -149,28 +166,36 @@ class PPOAgent(OnlineAgentVE):
         b_advantages = advantages.reshape(-1)
         b_returns = returns.reshape(-1)
         b_values = values.reshape(-1)
-        print(f'**{b_obs.shape, b_actions.shape, b_advantages.shape, b_returns.shape, b_values.shape=}')
+        # print(f'**{b_obs.shape, b_actions.shape, b_advantages.shape, b_returns.shape, b_values.shape=}')
         
         # Optimizing the policy and value network
         b_inds = np.arange(self.batch_size)
         clipfracs = []
-        # 每个数据还是跑一遍
+        # 每个数据还是跑一遍，但分多批
         for epoch in range(self.update_epochs):
             np.random.shuffle(b_inds)
+            # old_approx_kl = None
+            approx_kl = None
             for start in range(0, self.batch_size, self.minibatch_size):
                 end = start + self.minibatch_size
                 mb_inds = b_inds[start:end] 
 
+                # NOTE: 因为是mini-batch, 所有计算很快
                 newlogprob, entropy, newvalue = self.actor_critic.get_action_value(b_obs[mb_inds], b_actions.long()[mb_inds])
                 logratio = newlogprob - b_logprobs[mb_inds]
                 ratio = logratio.exp()
-
+                # print(f'\tpi-ratio: {ratio}')
+                # print(f'\t{logratio=}')
+                # print(f'\t{newlogprob=}')
+                # print(f'\t{entropy=}')
+                # print(f'\t{newvalue=}')
                 with torch.no_grad():
                     # calculate approx_kl http://joschu.net/blog/kl-approx.html
                     # 提高稳定性
                     # TODO: move to loc of target_kl
-                    old_approx_kl = (-logratio).mean()
+                    # old_approx_kl = (-logratio).mean()
                     approx_kl = ((ratio - 1) - logratio).mean()
+                    # print(f'{approx_kl.item()=}, {old_approx_kl.item()=}')
                     clipfracs += [((ratio - 1.0).abs() > self.clip_coef).float().mean().item()]
 
                 # XXX TODO: 这里减去的是minibatch的平均值, 可以考虑减去整个steps_per_epoch*num_envs的平均值
@@ -178,13 +203,18 @@ class PPOAgent(OnlineAgentVE):
                 # XXX: 这里打乱了顺序，导致非因果，时序非平稳数据，比如金融数据，或应该保存原始序列，减去running_mean更为合适
                 #      TODO: 将来校验
                 mb_advantages = b_advantages[mb_inds]
+                # print(f'\t{mb_advantages=}')
                 if self.norm_adv:
                     mb_advantages = (mb_advantages - mb_advantages.mean()) / (mb_advantages.std() + 1e-8)
-
+                # print(f'\tafter: {mb_advantages=}')
+     
                 # Policy loss
                 pg_loss1 = -mb_advantages * ratio
                 pg_loss2 = -mb_advantages * torch.clamp(ratio, 1 - self.clip_coef, 1 + self.clip_coef)
                 pg_loss = torch.max(pg_loss1, pg_loss2).mean()
+                # print(f'\t{pg_loss1=}')
+                # print(f'\t{pg_loss2=}')
+                # print(f'\t{pg_loss=}')
 
                 # Value loss
                 # XXX 此处用huber-loss或可考虑，value-clip未必有依据
@@ -202,15 +232,19 @@ class PPOAgent(OnlineAgentVE):
                 else:
                     v_loss = 0.5 * ((newvalue - b_returns[mb_inds]) ** 2).mean()
 
+                # print(f'{v_loss=}')
+                # print(f'{entropy=}')
                 entropy_loss = entropy.mean()
                 loss = pg_loss - self.ent_coef * entropy_loss + v_loss * self.vf_coef
-
+                # print(f'**{loss.item()=}: {pg_loss.item()=}, {entropy_loss.item()=}, {v_loss.item()=}')
+                
                 self.optimizer.zero_grad()
                 loss.backward()
                 if self.max_grad_norm is not None:
                     nn.utils.clip_grad_norm_(self.actor_critic.parameters(), self.max_grad_norm)
                 self.optimizer.step()
 
+            # print(f'**{approx_kl=}')
             if self.target_kl is not None and approx_kl > self.target_kl:
                 self.logger.info(f"Early stopping at step {epoch} due to reaching max kl: {approx_kl}")
                 should_exit = True
@@ -218,7 +252,7 @@ class PPOAgent(OnlineAgentVE):
 
         y_pred, y_true = b_values.cpu().numpy(), b_returns.cpu().numpy()
         var_y = np.var(y_true)
-        # XXX ?
+        # XXX
         explained_var = np.nan if var_y == 0 else 1 - np.var(y_true - y_pred) / var_y
 
         episode_info = {
@@ -229,25 +263,41 @@ class PPOAgent(OnlineAgentVE):
             'explained_var': explained_var,
             'clipfracs': np.mean(clipfracs)
         }
+        self.logger.info(f'**{episode_info=}')
+        
+        # XXX TEMP: test
+        from rlearn_dev.utils.eval_agent import eval_agent_performance
+        single_env = gym.make('CartPole-v1')
+        performance_stats = eval_agent_performance(self, single_env, num_episodes=10)
+        # print(f'{performance_stats=}')
+        for key, value in performance_stats.items():
+            print(f"{key}: {value}")
+            
         return should_exit, episode_info
     
     def after_learn(self):
         pass
     
-    def predict(self, states, deterministic=False):
-        state = torch.FloatTensor(states).to(self.device)
+    def predict(self, state, deterministic=False):
+        # for single env
+        assert state.shape == self.single_observation_space.shape
+        states = torch.FloatTensor(np.array([state])).to(self.device)
         with torch.no_grad():
             actions, action_probs, entropy, values = self.actor_critic.get_action_and_value(
-                state, deterministic=deterministic,
+                states, deterministic=deterministic,
                 compute_entropy=True
             )
+            # print(f'{actions=}')
+            # print(f'{action_probs=}')
+            # print(f'{entropy=}')
+            # print(f'{values=}')
             info = {
-                'action_probs': action_probs.cpu().tolist(),
-                'entropy': entropy.cpu().tolist(),
-                'values': values.cpu().tolist()
+                'action_probs': action_probs[0].cpu().tolist(),
+                'entropy': entropy[0].cpu().tolist(),
+                'values': values[0].cpu().tolist()
             }
         
-        return actions, info
+        return actions[0].cpu().numpy(), info
     
     def model_dict(self):
         state = {

@@ -137,7 +137,7 @@ class OnlineAgentVE(BaseAgent):
 
         # 准备返回的训练信息
         learning_info = {
-            'total_episodes': exit_monitor.episode_count,
+            'total_episode': exit_monitor.episode_count,
             'total_steps': total_steps,
             'training_duration': training_duration,
             'exit_reason': exit_reason,

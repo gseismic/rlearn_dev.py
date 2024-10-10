@@ -5,7 +5,7 @@ from .i18n import Translator
 
 def eval_agent_performance(agent, 
                            env, 
-                           num_episodes=100, 
+                           num_episodes=10, 
                            max_steps=1000, 
                            deterministic=False):
     """

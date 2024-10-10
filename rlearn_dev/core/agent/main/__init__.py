@@ -1,4 +1,4 @@
 from .online_agent import OnlineAgent
-from .online_agent_v import OnlineAgentV
+from .online_agent_ve import OnlineAgentVE
 
-__all__ = ['OnlineAgent', 'OnlineAgentV']
+__all__ = ['OnlineAgent', 'OnlineAgentVE']

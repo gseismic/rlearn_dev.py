@@ -1,7 +1,7 @@
-from .base import BaseVecEnvPlayer
 import numpy as np
-from concurrent.futures import ProcessPoolExecutor
 import multiprocessing
+from concurrent.futures import ProcessPoolExecutor
+from .base import BaseVecEnvPlayer
 
 class SyncVecEnvPlayer(BaseVecEnvPlayer):
 

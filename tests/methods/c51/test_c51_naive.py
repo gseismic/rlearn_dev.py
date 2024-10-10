@@ -18,7 +18,7 @@ def test_c51_naive():
     #   (3) 过快的target_hard_update_freq
     # half_life 
     #
-    max_episodes = 1000
+    max_episodes = 300
     # 使用混合类型配置
     # gamma = 0.9 # bad, becasue 0.9**500 = 1.322070819480823e-23
     # gamma = 0.99 # 

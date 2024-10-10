@@ -4,7 +4,20 @@ paper:
 ## 论文 & 博客 | Papers & Blogs
 以下是一些与 C51 相关的论文，其中探讨了目标分布、插值方法以及其他相关主题：
 
-[Distributional Reinforcement Learning知乎blog](https://zhuanlan.zhihu.com/p/76786102)
+[@zh Distributional Reinforcement Learning知乎blog](https://zhuanlan.zhihu.com/p/76786102)
+[@en C51 brief](https://adityauser.github.io/posts/2019/06/C51/)
+
+值分布强化学习（Distributional Reinforcement Learning）
+https://www.deeprlhub.com/d/105-distributional-reinforcement-learning
+
+cnblog:
+https://www.cnblogs.com/lucifer1997/p/13278817.html
+
+Implicit Quantile Networks for Distributional Reinforcement Learning
+https://arxiv.org/pdf/1806.06923
+
+An Analysis of Categorical Distributional Reinforcement Learning
+https://proceedings.mlr.press/v84/rowland18a/rowland18a.pdf
 
 1. **C51: Categorical DQN**
    - **标题**: "C51: A Categorical DQN"

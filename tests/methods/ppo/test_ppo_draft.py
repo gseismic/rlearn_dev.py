@@ -5,7 +5,7 @@ from rlearn_dev.utils.eval_agent import eval_agent_performance
 from rlearn_dev.utils.seed import seed_all
 
 # make reproducible
-g_seed = 36
+g_seed = None
 seed_all(g_seed) # do NOT forget PPOAgent(.., seed=g_seed)
 
 def make_env(env_id, idx, capture_video, run_name):
@@ -52,10 +52,10 @@ def test_ppo_naive_env2():
         'update_epochs': 200, # 200
         'num_minibatches': 10, # minibatch_size: batch_size/num_minibatches
     }
-    max_epochs = 10
+    max_epochs = 5
     # 小步迭代: num_envs * steps_per_epoch
     # too small steps_per_epoch will make value not stable
-    steps_per_epoch = 200
+    steps_per_epoch = 500
 
     agent = PPOAgent(envs, config=config, seed=g_seed)
     info = agent.learn(max_epochs, 

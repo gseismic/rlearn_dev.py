@@ -48,6 +48,7 @@ class PPOAgent(OnlineAgentVE):
         # self.mini_batch_size = self.config.get('mini_batch_size', 12)
         self.clipfrac_stop = self.config.get('clipfrac_stop', 0.12) # 0.12
         self.v_clipfrac_stop = self.config.get('v_clipfrac_stop', None) # 
+        self.kl_stop = self.config.get('kl_stop', None) # 
         
         self.device = torch.device("cuda" if torch.cuda.is_available() and self.config.get('cuda', True) else "cpu")
         assert isinstance(self.single_action_space, gym.spaces.Discrete), "only discrete action space is supported"
@@ -159,7 +160,6 @@ class PPOAgent(OnlineAgentVE):
             
     def after_episode(self, epoch, episode_reward, **kwargs):
         should_exit_program = False
-
         # self.next_obs, self.next_done, .. := env.step(..)
         (obs, actions, rewards, dones, values, logprobs) = (
             self.obs, self.actions, self.rewards, self.dones, self.values, self.logprobs
@@ -197,15 +197,12 @@ class PPOAgent(OnlineAgentVE):
             assert self.minibatch_size > 1
             clipfrac = None
             # 因为数据高度复用了
-            # TODO: 增加内部循环，因为local_minibatch_size变大了，循环次数为：self.batch_size/self.minibatch_size
+            # 增加内部循环，因为local_minibatch_size变大了，循环次数为：self.batch_size/self.minibatch_size
             local_minibatch_size = min(int(self.minibatch_size*1.005**epoch), self.batch_size)
             _std_num_loops = int(self.batch_size/self.minibatch_size)
             _current_num_loops = int(self.batch_size/local_minibatch_size)
             recommended_num_loops = int(_std_num_loops/_current_num_loops)
-            # print(f'**{recommended_num_loops=}, {_std_num_loops=}, {_current_num_loops=}')
-            
-            # shuffle后，使用不同的数据组合训练
-            # recommended_num_loops = 1
+            # print(f'**{recommended_num_loops=}, {_std_num_loops=}, {_current_num_loops=}')            
             for iloop in range(recommended_num_loops):
                 if exit_this_train:
                     break
@@ -280,7 +277,7 @@ class PPOAgent(OnlineAgentVE):
                         nn.utils.clip_grad_norm_(self.actor_critic.parameters(), self.max_grad_norm)
                     self.optimizer.step()
 
-                if epoch % 5 == 0:
+                if epoch % 20 == 0:
                     self.logger.info(
                         f'\tepoch:{epoch:2d}:{iloop+1}/{recommended_num_loops} approx_kl:{np.mean(approx_kls):<7.5f} '
                         f"mbs:{local_minibatch_size} frac:{clipfrac:<5.3f} "
@@ -299,11 +296,17 @@ class PPOAgent(OnlineAgentVE):
                     exit_this_train = True
                     break
                 
-                if self.target_kl is not None and approx_kl > self.target_kl:
+                if self.kl_stop is not None and approx_kl > self.kl_stop:
                     self.logger.info(f"Early stopping at step {epoch} due to reaching max kl: {approx_kl}")
+                    exit_this_train = True
+                    break
+                
+                if self.target_kl is not None and approx_kl > self.target_kl:
+                    self.logger.info(f"Early stopping Program at step {epoch} due to reaching max kl: {approx_kl}")
                     exit_this_train = True
                     should_exit_program = True
                     break
+                
 
         self.restore_lr()
         y_pred, y_true = b_values.cpu().numpy(), b_returns.cpu().numpy()

@@ -2,3 +2,8 @@
 *.pth
 *.pkl
 *.sqlite3
+checkpoints/
+final_model/
+final_model_*.pth
+final_models/
+*.zip

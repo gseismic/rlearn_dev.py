@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 import torch
+import random
+import numpy as np
 from pathlib import Path
 from ....logger import user_logger
 
@@ -22,12 +24,13 @@ class BaseAgent(ABC):
             self.initialize()
     
     def seed_all(self, seed):
-        self._seed = seed
         if self.env is not None:
             self.env.reset(seed=seed)
         if seed is None:
             torch.seed()
         else:
+            random.seed(seed)
+            np.random.seed(seed)
             torch.manual_seed(seed)
             torch.cuda.manual_seed(seed)
             torch.cuda.manual_seed_all(seed)

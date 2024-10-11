@@ -39,12 +39,15 @@ class SyncVecEnvPlayer(BaseVecEnvPlayer):
         truncateds = []
         infos = []
 
+        # FIX TODO 
+        # https://github.com/Farama-Foundation/Gymnasium/blob/main/gymnasium/vector/sync_vector_env.py
         with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
             futures = [executor.submit(self._step_env, env, action) for env, action in zip(self.envs, actions)]
-            for future, env in zip(futures, self.envs):  # 修正env未定义的问题
+            for future, env in zip(futures, self.envs): 
                 ob, reward, terminated, truncated, info = future.result()
                 if terminated or truncated:
                     ob, info = env.reset()
+                
                 obs.append(ob)
                 rewards.append(reward)
                 terminateds.append(terminated)

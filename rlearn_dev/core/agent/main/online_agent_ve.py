@@ -43,8 +43,9 @@ class OnlineAgentVE(BaseAgent):
               improvement_threshold=None,
               improvement_ratio_threshold=None,
               checkpoint_freq=None,
-              checkpoint_path='checkpoints',
-              final_model_path=None):
+              checkpoint_dir='checkpoints',
+              final_model_name=None,
+              final_model_dir='final_model'):
         """
         avg_reward := avg reward of all environments in recent reward_window_size episodes
         exit if any:
@@ -77,31 +78,45 @@ class OnlineAgentVE(BaseAgent):
         
         # here: the only `reset`
         states, infos = self.env.reset()
+        if len(states.shape) == 1:
+            states = states.reshape(-1, 1)
+        # print(states)
+        # raise
         self.before_learn(states, infos, max_epochs=max_epochs, steps_per_epoch=steps_per_epoch)
         total_steps = 0
-        # rewards_history = []
         start_time = time.time()
+        episode_reward = np.ones(self.num_envs)*float('-inf')
+        episode_reward_rolling = np.ones(self.num_envs)*float('-inf')
         for epoch in range(max_epochs):
             self.before_episode(epoch=epoch)
-            # episode_rewards = [] # (steps_per_epoch, num_envs)
-            episode_reward = np.zeros(self.num_envs)
             for epoch_step in range(steps_per_epoch):
                 actions = self.select_action(states, epoch_step=epoch_step)
                 (next_obs, rewards, terminates, truncates, infos) = self.env.step(actions)
-                episode_reward += np.array(rewards)
-                # episode_rewards.append(rewards)
+                # print(f'**{rewards=}')
+                if len(next_obs.shape) == 1:
+                    next_obs = next_obs.reshape(-1, 1)
+                dones = np.logical_or(terminates, truncates)
+                # print(f'{terminates=}')
+                # print(f'{truncates=}')
+                reward_initialized = episode_reward_rolling != float('-inf')
+                episode_reward_rolling[reward_initialized] += np.array(rewards[reward_initialized])
+                episode_reward_rolling[~reward_initialized] = np.array(rewards[~reward_initialized])
                 total_steps += 1
                 
                 self.step(next_obs, rewards, terminates, truncates, infos,
                           epoch=epoch, epoch_step=epoch_step)
                 
+                # print(episode_reward)
+                # print('rolling', episode_reward_rolling)
+                # episode_reward[~dones] = np.max(np.stack([episode_reward[~dones], episode_reward_rolling[~dones]]), axis=0)
+                episode_reward[dones] = episode_reward_rolling[dones]
+                episode_reward_rolling[dones] = float('-inf')
                 states = next_obs
 
-            # rewards_history.append(episode_reward)
             ep_should_exit, episode_info = self.after_episode(epoch=epoch, episode_reward=episode_reward)
             should_exit, exit_reason = exit_monitor.should_exit(np.mean(episode_reward))
             if exit_monitor.episode_count % verbose_freq == 0:  
-                self.logger.info(f"Episode {exit_monitor.episode_count}/{max_epochs}: {tr('average_reward')}: {np.mean(episode_reward)}")
+                self.logger.info(f"Episode {exit_monitor.episode_count}/{max_epochs}: {tr('average_reward')}: {np.mean(episode_reward)}, detail: {episode_reward}")
 
             if should_exit:
                 self.logger.info(f'{tr('exit_reason')}: {tr(exit_reason)}')
@@ -112,8 +127,9 @@ class OnlineAgentVE(BaseAgent):
                 break
             
             if checkpoint_freq and exit_monitor.episode_count % checkpoint_freq == 0:
-                checkpoint_file = Path(checkpoint_path) / f'checkpoint_episode_{exit_monitor.episode_count}.pth'
-                # in case of user-override save method
+                checkpoint_dir = checkpoint_dir or 'checkpoints'
+                checkpoint_file = Path(checkpoint_dir) / f'checkpoint_episode_{exit_monitor.episode_count}.pth'
+                # in case of user overridding save-method
                 checkpoint_file.parent.mkdir(parents=True, exist_ok=True)
                 self.save_checkpoint(str(checkpoint_file))
                 self.logger.info(tr('checkpoint_saved') + f': {checkpoint_file}')
@@ -122,26 +138,25 @@ class OnlineAgentVE(BaseAgent):
         
         end_time = time.time()
         training_duration = end_time - start_time
-        # 保存最终模型
-        if final_model_path:
-            final_model_path = Path(final_model_path)
-        else:
-            # 如果没有指定路径，则在 checkpoints 目录下生成一个唯一的文件名
-            final_model_path = Path(checkpoint_path) / f'final_model_{uuid.uuid4().hex[:8]}.pth'
-        final_model_path.parent.mkdir(parents=True, exist_ok=True)
-        self.save(str(final_model_path))
-        self.logger.info(tr('final_model_saved') + f': {final_model_path}')
+        if not final_model_dir:
+            final_model_dir = 'final_model'
+        if not final_model_name:
+            final_model_name = f'final_model_{uuid.uuid4().hex[:8]}.pth'
+        
+        final_model_file = Path(final_model_dir) / final_model_name
+        final_model_file.parent.mkdir(parents=True, exist_ok=True)
+        self.save(str(final_model_file))
+        self.logger.info(tr('final_model_saved') + f': {final_model_file}')
         
         end_time = time.time()
         training_duration = end_time - start_time
 
-        # 准备返回的训练信息
         learning_info = {
             'total_episode': exit_monitor.episode_count,
             'total_steps': total_steps,
             'training_duration': training_duration,
             'exit_reason': exit_reason,
-            'final_model_path': final_model_path,
+            'final_model_file': final_model_file,
             'best_avg_reward': exit_monitor.best_avg_reward,
         }
 

@@ -48,7 +48,7 @@ class PPOAgent(OnlineAgentVE):
         # self.mini_batch_size = self.config.get('mini_batch_size', 12)
         self.clipfrac_stop = self.config.get('clipfrac_stop', 0.12) # 0.12
         self.v_clipfrac_stop = self.config.get('v_clipfrac_stop', None) # 
-        self.kl_stop = self.config.get('kl_stop', None) # 
+        self.kl_stop = self.config.get('kl_stop', None) 
         
         self.device = torch.device("cuda" if torch.cuda.is_available() and self.config.get('cuda', True) else "cpu")
         assert isinstance(self.single_action_space, gym.spaces.Discrete), "only discrete action space is supported"

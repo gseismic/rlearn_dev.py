@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.distributions.categorical import Categorical
 from torch.distributions.normal import Normal
 import numpy as np
-from rlearn_dev.utils.nn import mlp
+from rlearn_dev.utils.nn.mlp import mlp
 
 class Actor(nn.Module):
     def compute_distribution(self, observations):

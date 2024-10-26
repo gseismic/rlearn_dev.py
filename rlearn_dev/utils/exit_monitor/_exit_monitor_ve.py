@@ -54,7 +54,7 @@ class ExitMonitorVE:
             if self.improvement_threshold is not None:
                 if avg_reward > self.best_avg_reward + self.improvement_threshold:
                     self.best_avg_reward = avg_reward
-                    self.episodes_without_improvement = 0
+                    self.episodes_without_improvement = 0   
                 else:
                     self.episodes_without_improvement += self.reward_check_freq
                     if self.episodes_without_improvement >= self.no_improvement_threshold:

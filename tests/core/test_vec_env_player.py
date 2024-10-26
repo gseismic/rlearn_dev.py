@@ -1,7 +1,8 @@
-import numpy as np
-import pytest
 from rlearn_dev.core.env_player import SyncVecEnvPlayer
 import gymnasium as gym
+import numpy as np
+import pytest
+
 
 def test_sync_vec_env_player():
     num_envs = 4

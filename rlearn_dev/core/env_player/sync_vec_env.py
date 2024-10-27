@@ -1,80 +1,72 @@
 import numpy as np
-import multiprocessing
-from concurrent.futures import ProcessPoolExecutor
+from copy import deepcopy
 from .base import BaseVecEnvPlayer
 
+# Gymnasium-like SyncVecEnvPlayer
 class SyncVecEnvPlayer(BaseVecEnvPlayer):
+    """
+    SyncVecEnvPlayer is a vectorized environment player that uses a single process to step multiple environments.
+    Reference:
+        https://github.com/Farama-Foundation/Gymnasium/blob/main/gymnasium/vector/sync_vector_env.py
+    """
 
-    def __init__(self, env_fn, num_envs=1, max_workers=None):
-        assert num_envs > 0, "num_envs must be greater than 0"
-        self.envs = [env_fn() for _ in range(num_envs)]
-        self._num_envs = num_envs
-        self._single_action_space = self.envs[0].action_space
-        self._single_observation_space = self.envs[0].observation_space
-        self.max_workers = max_workers if max_workers is not None else min(multiprocessing.cpu_count(), num_envs)
+    def __init__(self, env_fns, **kwargs):
+        """
+        Args:
+            copy (bool): Whether to copy the observation space.
+        """
+        super().__init__(env_fns, **kwargs)
+        self._rewards = np.zeros(self.num_envs, dtype=np.float32)
+        self._terminateds = np.zeros(self.num_envs, dtype=np.bool_)
+        self._truncateds = np.zeros(self.num_envs, dtype=np.bool_)
+        self._observations = np.zeros((self.num_envs,) + self.single_observation_space.shape,
+                                      dtype=self.single_observation_space.dtype)
+        self._should_reset = np.zeros(self.num_envs, dtype=np.bool_)
+        self._infos = {'infos': []}
 
-    def reset(self, **kwargs):
-        if self._num_envs == 1:
-            ob, info = self.envs[0].reset(**kwargs)
-            return np.expand_dims(ob, axis=0), [info]
+    def reset(self, seed=None, options=None):
+        if seed is None:
+            seed = [None] * self.num_envs
+        elif isinstance(seed, int):
+            seed = [seed + i for i in range(self.num_envs)]
+        elif isinstance(seed, list):
+            assert len(seed) == self.num_envs, f"The length of seed ({len(seed)}) must be equal to the number of environments ({self.num_envs})."
 
-        results = []
-        infos = []
-        for env in self.envs:
-            ob, info = env.reset(**kwargs)
-            results.append(ob)
-            infos.append(info)
-        return np.stack(results), infos
+        obs, infos = [], {'infos': []}
+        for i, (env, my_seed) in enumerate(zip(self.envs, seed)):
+            ob, info = env.reset(seed=my_seed, options=options)
+            obs.append(ob)
+            infos['infos'].append(info)
+        return np.stack(obs), infos
 
-    def step(self, actions):
-        if self._num_envs == 1:
-            ob, reward, terminated, truncated, info = self.envs[0].step(actions[0])
-            if terminated or truncated:
-                ob, info = self.envs[0].reset()
-            return np.expand_dims(ob, axis=0), np.array([reward]), np.array([terminated]), np.array([truncated]), [info]
-
-        obs = []
-        rewards = []
-        terminateds = []
-        truncateds = []
-        infos = []
-
-        # FIX TODO 
-        # https://github.com/Farama-Foundation/Gymnasium/blob/main/gymnasium/vector/sync_vector_env.py
-        with ProcessPoolExecutor(max_workers=self.max_workers) as executor:
-            futures = [executor.submit(self._step_env, env, action) for env, action in zip(self.envs, actions)]
-            for future, env in zip(futures, self.envs): 
-                ob, reward, terminated, truncated, info = future.result()
-                if terminated or truncated:
-                    ob, info = env.reset()
+    def step(self, actions):        
+        obs, infos = [], {'infos': []}
+        for i, action in enumerate(actions):
+            if self._should_reset[i]:
+                ob, info = self.envs[i].reset()
                 
-                obs.append(ob)
-                rewards.append(reward)
-                terminateds.append(terminated)
-                truncateds.append(truncated)
-                infos.append(info)
+                self._rewards[i] = 0.0
+                self._terminateds[i] = False
+                self._truncateds[i] = False
+            else:
+                (
+                    ob, 
+                    self._rewards[i], 
+                    self._terminateds[i], 
+                    self._truncateds[i], 
+                    info
+                ) = self.envs[i].step(action)
+            
+            obs.append(ob)
+            infos['infos'].append(info)
+        
+        self._should_reset = np.logical_or(self._terminateds, self._truncateds)
+        return np.stack(obs), np.copy(self._rewards), np.copy(self._terminateds), np.copy(self._truncateds), infos
 
-        return np.stack(obs), np.stack(rewards), np.stack(terminateds), np.stack(truncateds), infos
-
-    def _step_env(self, env, action):
-        return env.step(action)
-
-    def render(self):
-        for env in self.envs:
-            env.render()
-
-    def close(self):
+    def do_close(self, **kwargs):
         for env in self.envs:
             env.close()
-
-    @property
-    def num_envs(self):
-        return self._num_envs
-
-    @property   
-    def single_action_space(self):
-        return self._single_action_space
-
-    @property
-    def single_observation_space(self):
-        return self._single_observation_space
+    
+    def render(self, mode='human'):
+        for env in self.envs:
+            env.render(mode)

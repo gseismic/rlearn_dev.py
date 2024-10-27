@@ -2,12 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 from torch.distributions import Categorical
-
-
-def layer_init(layer, std=np.sqrt(2), bias_const=0.0):
-    torch.nn.init.orthogonal_(layer.weight, std)
-    torch.nn.init.constant_(layer.bias, bias_const)
-    return layer
+from .utils import layer_init
 
 # from https://github.com/vwxyzjn/cleanrl/blob/master/cleanrl/ppo.py
 class ActorCritic(nn.Module):
@@ -34,12 +29,11 @@ class ActorCritic(nn.Module):
     def get_value(self, x):
         return self.critic(x)
     
-    def get_action_value(self, x, action, compute_entropy=True):
-        assert action is not None
-        logits = self.actor(x) / self.temperature
-        probs = Categorical(logits=logits)
-        entropy = probs.entropy() if compute_entropy else 0 
-        return probs.log_prob(action), entropy, self.critic(x)
+    # def get_action_value(self, x, action, compute_entropy=True):
+    #     logits = self.actor(x) / self.temperature
+    #     probs = Categorical(logits=logits)
+    #     entropy = probs.entropy() if compute_entropy else None
+    #     return probs.log_prob(action), entropy, self.critic(x)
     
     def get_action_and_value(self, x, action=None,
                              compute_entropy=True, deterministic=False):
@@ -52,5 +46,5 @@ class ActorCritic(nn.Module):
                 assert logits.shape[0] == 1, 'only support single action'
             else:
                 action = probs.sample()
-        entropy = probs.entropy() if compute_entropy else 0 
+        entropy = probs.entropy() if compute_entropy else None
         return action, probs.log_prob(action), entropy, self.critic(x)

@@ -4,7 +4,7 @@ from collections import namedtuple
 
 Experience = namedtuple('Experience', ('state', 'action', 'reward', 'next_state', 'done'))
 
-class ReplayBuffer(ABC):
+class BaseReplayBuffer(ABC):
     
     def __init__(self, capacity):
         self.capacity = capacity
@@ -28,10 +28,6 @@ class ReplayBuffer(ABC):
     @abstractmethod
     def __len__(self):
         pass
-
-
-class BasePrioritizedReplayBuffer(ReplayBuffer):
     
-    @abstractmethod
-    def update_priority(self, *args):
-        pass
+    def size(self):
+        return len(self)

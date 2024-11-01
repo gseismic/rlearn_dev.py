@@ -3,6 +3,25 @@
 [Asynchronous Methods for Deep Reinforcement Learning](https://proceedings.mlr.press/v48/mniha16.pdf)
 [NoisyNet](https://arxiv.org/pdf/1706.10295)
 
+## TODOs
+- [ ] HER
+- [ ] ICM
+- [ ] RND
+- [ ] DSACT
+- [ ] Decision Transformer
+- [ ] [MBMF](https://sites.google.com/view/mbmf)
+- [ ] Model-Based Value Estimation for Efficient Model-Free Reinforcement Learning
+- [ ] [Infinite horizon tasks are handled like episodic tasks](https://github.com/DLR-RM/stable-baselines3/issues/284)
+- [ ] [Time Limits in Reinforcement Learning](https://arxiv.org/pdf/1712.00378)
+
+## Methods
+### DSACT
+[official](https://github.com/Jingliang-Duan/DSAC-v2)
+[DSAC-T: Distributional Soft Actor-Critic with Three Refinements](https://arxiv.org/abs/2310.05858)
+[Distributional Soft Actor-Critic: Off-Policy Reinforcement Learning for Addressing Value Estimation Errors](https://arxiv.org/pdf/2001.02811)
+[code](https://github.com/DLR-RM/stable-baselines3/blob/master/stable_baselines3/dsac)
+
+
 ## Reference
 - [pg-is-all-you-need](https://github.com/MrSyee/pg-is-all-you-need/blob/master/01.A2C.ipynb)
 - [gymnasium](https://gymnasium.farama.org/api/env/)

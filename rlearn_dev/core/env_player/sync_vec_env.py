@@ -39,7 +39,7 @@ class SyncVecEnvPlayer(BaseVecEnvPlayer):
             infos['infos'].append(info)
         return np.stack(obs), infos
 
-    def step(self, actions):        
+    def step(self, actions):
         obs, infos = [], {'infos': []}
         for i, action in enumerate(actions):
             if self._should_reset[i]:

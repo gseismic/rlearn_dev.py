@@ -1,8 +1,8 @@
 import random
 from collections import deque
-from .base import ReplayBuffer, Experience
+from .base import BaseReplayBuffer, Experience
 
-class RandomReplayBuffer(ReplayBuffer):
+class RandomReplayBuffer(BaseReplayBuffer):
     def __init__(self, capacity):
         super().__init__(capacity)
         self.buffer = deque(maxlen=capacity)

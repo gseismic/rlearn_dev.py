@@ -1,7 +1,8 @@
 import sys
 from loguru import logger
 
-def make_logger(name=None, file=None, 
+def make_logger(name=None, 
+                file=None, 
                 format=None, 
                 level="INFO"):
     format = format or "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | <level>{level: <6}</level> | {message}"

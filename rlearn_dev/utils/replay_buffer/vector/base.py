@@ -27,6 +27,8 @@ class BaseReplayBuffer(ABC):
                  num_envs: int, 
                  device: str = 'auto',
                  # handle_timeout_termination: bool = True,
+                 state_dtype: np.dtype = np.float32,
+                 action_dtype: np.dtype = np.float32,
                  reward_dtype: np.dtype = np.float32):
         self.state_space = state_space
         self.action_space = action_space
@@ -39,9 +41,9 @@ class BaseReplayBuffer(ABC):
         self.num_envs = num_envs
         self.state_shape = get_obs_shape(self.state_space)
         self.action_dim = get_action_dim(self.action_space)
-        self.states = np.zeros((self.buffer_size, self.num_envs, *self.state_shape), dtype=self.state_space.dtype)
-        self.next_states = np.zeros((self.buffer_size, self.num_envs, *self.state_shape), dtype=self.state_space.dtype)
-        self.actions = np.zeros((self.buffer_size, self.num_envs, self.action_dim), dtype=np.float32)
+        self.states = np.zeros((self.buffer_size, self.num_envs, *self.state_shape), dtype=state_dtype)
+        self.next_states = np.zeros((self.buffer_size, self.num_envs, *self.state_shape), dtype=state_dtype)
+        self.actions = np.zeros((self.buffer_size, self.num_envs, self.action_dim), dtype=action_dtype)
         self.rewards = np.zeros((self.buffer_size, self.num_envs), dtype=reward_dtype)
         self.dones = np.zeros((self.buffer_size, self.num_envs), dtype=reward_dtype)
         # self.timeouts = np.zeros((self.buffer_size, self.num_envs), dtype=np.float32)

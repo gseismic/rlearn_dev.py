@@ -1,12 +1,18 @@
 import gymnasium as gym
-from rlearn_dev.methods.ddpg.draft.agent import DDPGAgent
+from rlearn_dev.methods.ddpg.naive.agent import DDPGAgent
 
 
 def make_env(env_id, seed, idx, capture_video, run_name):
     def thunk():
         if capture_video and idx == 0:
             env = gym.make(env_id, render_mode="rgb_array")
-            env = gym.wrappers.RecordVideo(env, f"videos/{run_name}")
+            env = gym.wrappers.RecordVideo(
+                env,
+                f"videos/{run_name}",
+                name_prefix=f"ddpg_{env_id}",
+                episode_trigger=lambda episode_idx: episode_idx % 100 == 0,
+                video_length=0, # 0 means infinite
+            )
         else:
             env = gym.make(env_id)
         env = gym.wrappers.RecordEpisodeStatistics(env)
@@ -15,23 +21,14 @@ def make_env(env_id, seed, idx, capture_video, run_name):
 
     return thunk
 
-"""
-Pendulum-v1
-    状态空间：Pendulum-v1 的状态空间是一个二维向量 
-    [
-    theta
-    theta_dot
-    ]
-    动作空间：动作空间是一维，表示施加的扭矩，因此动作维度为 1。
-"""
-def test_ddpg_draft():
-    capture_video = False # True
+def test_ddpg_naive():
+    capture_video = True
+    # capture_video = False
     run_name = 'test'
     num_envs = 5
     env_id = 'Hopper-v4'
     env = gym.vector.SyncVectorEnv([make_env(env_id, 36, i, capture_video, run_name)
                                      for i in range(num_envs)])
-    print(env.num_envs)
     g_seed = 36
     config = {
         'gamma': 0.99,
@@ -44,7 +41,7 @@ def test_ddpg_draft():
     }
     agent = DDPGAgent(env, config=config, seed=g_seed)
     learn_config = {
-        'max_episodes': 1000_000//256,
+        'max_episodes': 30_000//256,
         'max_episode_steps': 256,
         'max_total_steps': 1000_000,
         'verbose_freq': 1,
@@ -55,4 +52,4 @@ def test_ddpg_draft():
     
 if __name__ == '__main__':
     if 1:
-        test_ddpg_draft()
+        test_ddpg_naive()

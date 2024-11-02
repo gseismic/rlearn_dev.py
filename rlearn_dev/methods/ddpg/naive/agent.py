@@ -25,9 +25,13 @@ class DDPGAgent(OnlineAgent):
         policy_frequency=Field(type='int', default=2, ge=0),
         tau=Field(type='float', default=0.005, ge=0, le=1),
         exploration_noise=Field(type='float', default=0.1, ge=0, le=1),
+        critic_grad_norm_clip=Field(type='float', default=1.0, ge=0),
+        policy_grad_norm_clip=Field(type='float', default=1.0, ge=0),
     )
         
     def initialize(self):
+        self.critic_grad_norm_clip = self.config['critic_grad_norm_clip']
+        self.policy_grad_norm_clip = self.config['policy_grad_norm_clip']
         if self.config['q_learning_starts'] >= self.config['policy_learning_starts']:
             raise ValueError(f'q_learning_starts={self.config["q_learning_starts"]} must be less than policy_learning_starts={self.config["policy_learning_starts"]}')
         self.q_learning_starts = self.config['q_learning_starts']
@@ -101,6 +105,8 @@ class DDPGAgent(OnlineAgent):
         current_q = self.critic(states, actions).view(-1)
         critic_loss = nn.MSELoss()(current_q, td_target_q) # td_target_q.shape: (batch_size,)
         self.critic_optimizer.zero_grad()
+        if self.critic_grad_norm_clip is not None:
+            torch.nn.utils.clip_grad_norm_(self.critic.parameters(), self.critic_grad_norm_clip)
         critic_loss.backward()
         self.critic_optimizer.step()
         
@@ -115,6 +121,8 @@ class DDPGAgent(OnlineAgent):
             actor_loss = - self.critic(states, self.actor(states)).mean()
             self.actor_optimizer.zero_grad()
             actor_loss.backward()
+            if self.policy_grad_norm_clip is not None:
+                torch.nn.utils.clip_grad_norm_(self.actor.parameters(), self.policy_grad_norm_clip)
             self.actor_optimizer.step()
             self._update_target_networks()
     

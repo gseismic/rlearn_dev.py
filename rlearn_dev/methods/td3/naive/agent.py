@@ -30,7 +30,8 @@ class TD3Agent(OnlineAgent):
         exploration_noise=Field(type='float', default=0.1, ge=0, le=1),
         policy_noise=Field(type='float', default=0.2, ge=0, le=1), # new compared to naive.DDPG
         noise_clip=Field(type='float', default=0.5, ge=0, le=1), # new compared to naive.DDPG
-        policy_grad_norm_clip=Field(type='float', required=False, default=None, ge=0),
+        policy_grad_norm_clip=Field(type='float', default=1.0, ge=0),
+        critic_grad_norm_clip=Field(type='float', default=1.0, ge=0),
     )
         
     def initialize(self):
@@ -43,6 +44,7 @@ class TD3Agent(OnlineAgent):
         self.learning_starts = self.q_learning_starts
         self.policy_frequency = self.config['policy_frequency']
         self.policy_grad_norm_clip = self.config['policy_grad_norm_clip']
+        self.critic_grad_norm_clip = self.config['critic_grad_norm_clip']
         self.actor = get_actor(self.state_space, self.action_space)
         self.critic1 = get_critic(self.state_space, self.action_space)
         self.critic2 = get_critic(self.state_space, self.action_space) # new compared to naive.DDPG
@@ -138,6 +140,9 @@ class TD3Agent(OnlineAgent):
         
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
+        if self.critic_grad_norm_clip is not None:
+            torch.nn.utils.clip_grad_norm_(self.critic1.parameters(), self.critic_grad_norm_clip)
+            torch.nn.utils.clip_grad_norm_(self.critic2.parameters(), self.critic_grad_norm_clip)
         self.critic_optimizer.step()
         
         # 策略网络更新比Q网络慢 | policy-network update slower than Q-network

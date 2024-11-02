@@ -1,14 +1,14 @@
 import numpy as np
 import gymnasium as gym
 from ...env import is_discrete_space
-from .base import BaseReplayBuffer, ReplayBufferSample
+from .base import BaseReplayBuffer, ReplayBufferSamples
 
 class RandomReplayBuffer(BaseReplayBuffer):
         
-    def add(self, states, actions, rewards, next_states, dones):
+    def add(self, states, actions, rewards, next_states, dones, infos=None):
         # order: sarsa-like
         actions = actions.reshape((self.num_envs, self.action_dim))
-        if is_discrete_space(self.observation_space):
+        if is_discrete_space(self.state_space):
             states = states.reshape((self.num_envs, *self.state_shape))
             next_states = next_states.reshape((self.num_envs, *self.state_shape))
         
@@ -23,11 +23,12 @@ class RandomReplayBuffer(BaseReplayBuffer):
             self._full = True
             
     def sample(self, batch_size, copy: bool = True):
-        # Note: batch_size 采样的实际样本数是 batch_size * num_envs | the actual number of samples is batch_size * num_envs
+        # Note: batch_size 采样的实际样本数是 batch_size 而不是batch_size * num_envs | the actual number of samples is batch_size, not batch_size * num_envs
         buf_end = self.buffer_size if self._full else self._pos
         indices = np.random.randint(0, buf_end, size=batch_size)
         env_indices = np.random.randint(0, high=self.num_envs, size=(len(indices),))
-        samples = ReplayBufferSample(
+        # states.shape: (batch_size, *state_shape)
+        samples = ReplayBufferSamples(
             states=self.to_torch(self.states[indices, env_indices], copy=copy),
             actions=self.to_torch(self.actions[indices, env_indices], copy=copy),
             rewards=self.to_torch(self.rewards[indices, env_indices], copy=copy),

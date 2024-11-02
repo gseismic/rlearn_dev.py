@@ -3,8 +3,7 @@ import numpy as np
 import warnings
 import torch
 import gymnasium as gym
-from collections import namedtuple
-from typing import NamedTuple, Optional
+from typing import NamedTuple
 from ...env import get_obs_shape, get_action_dim
 from ...cuda import get_device
 
@@ -22,24 +21,26 @@ class ReplayBufferSamples(NamedTuple):
 class BaseReplayBuffer(ABC):
     
     def __init__(self,
-                 max_sample_size: int,
-                 observation_space: Optional[gym.Space] = None,
-                 action_space: Optional[gym.Space] = None,
+                 max_samples: int,
+                 state_space: gym.Space,
+                 action_space: gym.Space,
+                 num_envs: int, 
                  device: str = 'auto',
-                 num_envs: int = 1,
                  # handle_timeout_termination: bool = True,
                  reward_dtype: np.dtype = np.float32):
-        self.max_sample_size = max_sample_size
-        if max_sample_size % num_envs != 0:
-            warnings.warn(f'max_sample_size={max_sample_size} is not a multiple of num_envs={num_envs}.')
-        self.buffer_size = max_sample_size // num_envs
+        self.state_space = state_space
+        self.action_space = action_space
+        self.max_samples = max_samples
+        if max_samples % num_envs != 0:
+            warnings.warn(f'max_samples={max_samples} is not a multiple of num_envs={num_envs}.')
+        self.buffer_size = max_samples // num_envs
         # self.handle_timeout_termination = handle_timeout_termination
         self.device = get_device(device)
         self.num_envs = num_envs
-        self.state_shape = get_obs_shape(observation_space)
-        self.action_dim = get_action_dim(action_space)
-        self.states = np.zeros((self.buffer_size, self.num_envs, *self.state_shape), dtype=observation_space.dtype)
-        self.next_states = np.zeros((self.buffer_size, self.num_envs, *self.state_shape), dtype=observation_space.dtype)
+        self.state_shape = get_obs_shape(self.state_space)
+        self.action_dim = get_action_dim(self.action_space)
+        self.states = np.zeros((self.buffer_size, self.num_envs, *self.state_shape), dtype=self.state_space.dtype)
+        self.next_states = np.zeros((self.buffer_size, self.num_envs, *self.state_shape), dtype=self.state_space.dtype)
         self.actions = np.zeros((self.buffer_size, self.num_envs, self.action_dim), dtype=np.float32)
         self.rewards = np.zeros((self.buffer_size, self.num_envs), dtype=reward_dtype)
         self.dones = np.zeros((self.buffer_size, self.num_envs), dtype=reward_dtype)
@@ -82,4 +83,7 @@ class BaseReplayBuffer(ABC):
         if self._full:
             return self.buffer_size
         return self._pos
+    
+    def size(self):
+        return len(self)
 

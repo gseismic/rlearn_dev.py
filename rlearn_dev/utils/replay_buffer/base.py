@@ -31,3 +31,9 @@ class BaseReplayBuffer(ABC):
     
     def size(self):
         return len(self)
+
+class BasePrioritizedReplayBuffer(BaseReplayBuffer):
+    
+    @abstractmethod
+    def update_priorities(self, indices, td_errors):
+        pass

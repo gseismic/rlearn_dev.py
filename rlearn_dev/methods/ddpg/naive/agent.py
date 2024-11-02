@@ -42,12 +42,14 @@ class DDPGAgent(OnlineAgent):
         self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=self.config['actor_lr'])
         self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=self.config['critic_lr'])
         
-        self.state_space.dtype = np.float32
         self.replay_buffer = RandomReplayBuffer(max_samples=self.config['buffer_size'], 
                                                 state_space=self.state_space,
                                                 action_space=self.action_space,
                                                 num_envs=self.num_envs,
-                                                device=self.device)
+                                                device=self.device, 
+                                                state_dtype=np.float32,
+                                                action_dtype=np.float32,
+                                                reward_dtype=np.float32)
         self.gamma = self.config['gamma']
         self.tau = self.config['tau']
         self._q_training_started = False
@@ -62,7 +64,7 @@ class DDPGAgent(OnlineAgent):
                 action = self.actor(torch.FloatTensor(state))
                 action += torch.normal(0, self.actor.action_scale * self.config['exploration_noise'])
                 action = action.cpu().numpy().clip(self.action_space.low, self.action_space.high)
-        return action
+        return action.astype(self.action_space.dtype)
     
     def step(self, states, actions, next_states, rewards, terminates, truncates, infos, 
              *, global_step_idx=None, episode_step_idx=None, episode_idx=None, **kwargs):

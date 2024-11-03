@@ -9,6 +9,7 @@ from pathlib import Path
 from cfgdict import make_config #, Schema
 from gymnasium.vector import VectorEnv
 from ....logger import user_logger
+from ....utils.cuda import get_device
 
 class BaseAgent(ABC):
     schema = None
@@ -27,7 +28,7 @@ class BaseAgent(ABC):
         self.is_vec_env = False
         self.state_space = None
         self.action_space = None
-        self.device = torch.device(self.config.get('device', 'cuda' if torch.cuda.is_available() else 'cpu'))
+        self.device = get_device(self.config.get('device'))
         self.set_env(env)
     
     def make_config(self, config):

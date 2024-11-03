@@ -24,10 +24,25 @@ class OnlineAgent(BaseAgent):
     def before_learn(self, *args, **kwargs):
         pass
     
-    def before_episode(self, *args, **kwargs):
+    def before_episode(self, state, info, **kwargs):
         pass
+            
+    @abstractmethod
+    def select_action(self, state, 
+                      *, episode_idx=None, global_step_idx=None, episode_step_idx=None):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def step(self, state, action, 
+             next_state, reward, done, truncated, info,
+             *, episode_idx=None, global_step_idx=None, episode_step_idx=None):
+        raise NotImplementedError()
     
-    def after_episode(self, i_episode, episode_rewards, *args, **kwargs):
+    def after_episode(self, 
+                      episode_rewards=None, 
+                      episode_total_reward=None,
+                      episode_idx=None,
+                      **kwargs):
         pass
     
     def after_learn(self, *args, **kwargs):
@@ -39,15 +54,6 @@ class OnlineAgent(BaseAgent):
     
     @abstractmethod
     def load_model_dict(self, model_dict):
-        raise NotImplementedError()
-        
-    @abstractmethod
-    def select_action(self, state, *args, **kwargs):
-        raise NotImplementedError()
-
-    @abstractmethod
-    def step(self, state, action, reward, next_state, done, 
-             episode_steps, total_steps, *args, **kwargs):
         raise NotImplementedError()
     
     @abstractmethod
@@ -99,46 +105,54 @@ class OnlineAgent(BaseAgent):
         trajectory_recorder = TrajectoryRecorder()
 
         self.before_learn()
-        total_steps = 0
+        global_step_idx = 0
         rewards_history = []
         episode_lengths = []
         start_time = time.time()
+        episode_idx = 0
         while True:
-            state, _ = self.env.reset()
+            episode_kwargs = {'episode_idx': episode_idx}
+            state, info = self.env.reset()
             trajectory_recorder.start_episode(state)
+            episode_step_idx = 0
             episode_rewards = []
-            episode_reward = 0
-            episode_steps = 0
+            episode_total_reward = 0
 
-            self.before_episode()
+            self.before_episode(state, info, **episode_kwargs)
             while True:
-                action = self.select_action(state)
+                step_kwargs = {'episode_step_idx': episode_step_idx, 'global_step_idx': global_step_idx}
+                action = self.select_action(state, **episode_kwargs, **step_kwargs)
                 next_state, reward, done, truncated, info = self.env.step(action)
                 trajectory_recorder.record_step(state, action, next_state, reward, done, truncated, info)
-                episode_reward += reward
+                episode_total_reward += reward
                 episode_rewards.append(reward)
-                episode_steps += 1
-                total_steps += 1
                 
-                self.step(state, action, reward, next_state, done,
-                          episode_steps, total_steps)
-
+                self.step(state, action, 
+                          next_state, reward, done, truncated, info,
+                          **episode_kwargs, **step_kwargs)
+                
+                episode_step_idx += 1
+                global_step_idx += 1
+                
                 state = next_state
-
                 if (
                     (done or truncated)
-                    or (max_episode_steps is not None and episode_steps >= max_episode_steps)
+                    or (max_episode_steps is not None and episode_step_idx >= max_episode_steps)
                 ):
                     break
                 
             trajectory_recorder.end_episode()
-            rewards_history.append(episode_reward)
-            episode_lengths.append(episode_steps)
-            self.after_episode(exit_monitor.episode_count, episode_rewards)
-            should_exit, exit_reason = exit_monitor.should_exit(episode_reward)
+            rewards_history.append(episode_total_reward)
+            episode_lengths.append(episode_step_idx)
+            reward_kwargs = {
+                'episode_rewards': episode_rewards, 
+                'episode_total_reward': episode_total_reward
+            }
+            self.after_episode(**reward_kwargs, **episode_kwargs)
+            should_exit, exit_reason = exit_monitor.should_exit(episode_total_reward)
 
             if exit_monitor.episode_count % verbose_freq == 0:
-                self.logger.info(f"Episode {exit_monitor.episode_count}/{max_episodes}: {tr('total_reward')}: {episode_reward}")
+                self.logger.info(f"Episode {exit_monitor.episode_count}/{max_episodes}: {tr('total_reward')}: {episode_total_reward}")
             
             if should_exit:
                 self.logger.info(f'{tr('exit_reason')}: {tr(exit_reason)}')
@@ -150,7 +164,8 @@ class OnlineAgent(BaseAgent):
                 checkpoint_file.parent.mkdir(parents=True, exist_ok=True)
                 self.save_checkpoint(str(checkpoint_file))
                 self.logger.info(tr('checkpoint_saved') + f': {checkpoint_file}')
-
+            
+            episode_idx += 1
         self.after_learn()
         if final_model_path:
             final_model_path = Path(final_model_path)
@@ -167,7 +182,7 @@ class OnlineAgent(BaseAgent):
             'rewards_history': rewards_history,
             'episode_lengths': episode_lengths,
             'total_episodes': exit_monitor.episode_count,
-            'total_steps': total_steps,
+            'total_steps': global_step_idx,
             'training_duration': training_duration,
             'exit_reason': exit_reason,
             'final_model_path': final_model_path,

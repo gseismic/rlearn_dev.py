@@ -89,9 +89,11 @@ class OnlineAgent(BaseAgent):
         episode_reward = np.ones(self.num_envs)*float('-inf')
         episode_reward_rolling = np.ones(self.num_envs)*float('-inf')
         for episode_idx in range(max_episodes):
-            self.before_episode(episode_idx=episode_idx)
+            episode_kwargs = {'episode_idx': episode_idx}
+            self.before_episode(states, infos, **episode_kwargs)
             for episode_step_idx in range(max_episode_steps):
-                actions = self.select_action(states, episode_step_idx=episode_step_idx, global_step_idx=global_step_idx)
+                step_kwargs = {'episode_step_idx': episode_step_idx, 'global_step_idx': global_step_idx}
+                actions = self.select_action(states, **episode_kwargs, **step_kwargs)
                 (next_states, rewards, terminates, truncates, infos) = self.env.step(actions)
     
                 if len(next_states.shape) == 1:
@@ -103,8 +105,7 @@ class OnlineAgent(BaseAgent):
                 
                 self.step(states, actions, next_states, 
                           rewards, terminates, truncates, infos,
-                          global_step_idx=global_step_idx,
-                          episode_idx=episode_idx, episode_step_idx=episode_step_idx)
+                          **episode_kwargs, **step_kwargs)
                 
                 global_step_idx += 1
                 # episode_reward[~dones] = np.max(np.stack([episode_reward[~dones], episode_reward_rolling[~dones]]), axis=0)

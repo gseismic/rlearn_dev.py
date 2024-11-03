@@ -77,7 +77,7 @@ class TD3Agent(OnlineAgent):
             action = np.array([self.action_space.sample() for _ in range(self.num_envs)])
         else:
             with torch.no_grad():
-                action = self.actor(torch.FloatTensor(state))
+                action = self.actor(torch.FloatTensor(state).to(self.device))
                 action += torch.normal(0, self.actor.action_scale * self.config['exploration_noise'])
                 action = action.cpu().numpy().clip(self.action_space.low, self.action_space.high)
         return action.astype(self.action_space.dtype)
@@ -194,10 +194,10 @@ class TD3Agent(OnlineAgent):
         
     def predict(self, state, deterministic=None):
         if deterministic is not None:
-            warn(f'DDPG is not a stochastic policy, deterministic={deterministic} is ignored')
-        state = torch.FloatTensor(np.array(state))
+            warn(f'deterministic={deterministic} parameter is ignored in the current implementation')
+        state = torch.FloatTensor(np.array(state)).to(self.device)
         action = self.actor(state)
-        return action.detach().numpy()
+        return action.detach().cpu().numpy()
 
     def _get_action_noise(self, batch_size):
         """生成动作噪声"""

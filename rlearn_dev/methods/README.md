@@ -21,6 +21,17 @@
 [Distributional Soft Actor-Critic: Off-Policy Reinforcement Learning for Addressing Value Estimation Errors](https://arxiv.org/pdf/2001.02811)
 [code](https://github.com/DLR-RM/stable-baselines3/blob/master/stable_baselines3/dsac)
 
+### PPG
+[official](https://github.com/openai/phasic-policy-gradient)
+[PPG: Phasic Policy Gradient for Deep Reinforcement Learning](https://arxiv.org/pdf/2009.04416)
+
+### SAMPLE EFFICIENT ACTOR-CRITIC WITH EXPERIENCE REPLAY
+[Sample Efficient Actor-Critic with Experience Replay](https://arxiv.org/pdf/2010.03744)
+
+## Topics
+### Time Limits in Reinforcement Learning
+[Time Limits in Reinforcement Learning](https://arxiv.org/pdf/1712.00378)
+
 
 ## Reference
 - [pg-is-all-you-need](https://github.com/MrSyee/pg-is-all-you-need/blob/master/01.A2C.ipynb)

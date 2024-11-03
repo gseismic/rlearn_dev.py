@@ -1,5 +1,5 @@
 
-from .actor_critic import MLPActor, MLPCritic
+from .discrete import MLPActor, MLPCritic
 
 
 def get_actor_model(env, model_type='MLPActor', model_kwargs={}):

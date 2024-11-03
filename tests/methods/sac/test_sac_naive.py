@@ -1,5 +1,5 @@
 import gymnasium as gym
-from rlearn_dev.methods.sac.naive.agent import SACAgent as Agent
+from rlearn_dev.methods.sac.naive import SACAgent as Agent
 
 
 def make_env(env_id, seed, idx, capture_video, run_name):

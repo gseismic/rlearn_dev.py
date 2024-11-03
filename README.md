@@ -14,12 +14,13 @@ pip install -e .
 ## Methods
 | state | Agent | version | env | description | demo |   
 |:---:|:---:|:---:|:---|:---|:---|
+| ✅ | C51  | naive | VecEnv | Categorical DQN | [demo](tests/methods/c51/test_c51_naive.py)
 | ✅ | QAC  | naive | Env | Q Actor-Critic | [demo](tests/methods/qac/test_qac_naive.py)
 | ✅ | DDPG | naive | VecEnv | DDPG | [demo](tests/methods/ddpg/test_ddpg_naive.py)
-| ✅ | PPO  | draft | VecEnv | Proximal Policy Optimization | [demo](tests/methods/ppo/test_ppo_draft.py)
 | ✅ | TD3  | naive | VecEnv | Twin Delayed DDPG | [demo](tests/methods/td3/test_td3_naive.py)
 | ✅ | SAC  | naive | VecEnv | Soft Actor-Critic | [demo](tests/methods/sac/test_sac_naive.py)
-| ✅ | C51  | naive | VecEnv | Categorical DQN | [demo](tests/methods/c51/test_c51_naive.py)
+| ✅ | MCPG | basic |   Env  | Monto-Carlo REINFORCE | [demo](tests/methods/mcpg/test_mcpg_basic.py)
+| ✅ | PPO  | draft | VecEnv | Proximal Policy Optimization | [demo](tests/methods/ppo/test_ppo_draft.py)
 
 ## Usages
 ```python

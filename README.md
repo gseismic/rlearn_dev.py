@@ -12,7 +12,7 @@ pip install -e .
 - main: stable version, ready for production, with more docs and tests
 
 ## Methods
-| state | Agent | version | description | env | demo |   
+| state | Agent | version | env | description | demo |   
 |:---:|:---:|:---:|:---|:---|:---|
 | ✅ | QAC  | naive | Env | Q Actor-Critic | [demo](tests/methods/qac/test_qac_naive.py)
 | ✅ | DDPG | naive | VecEnv | DDPG | [demo](tests/methods/ddpg/test_ddpg_naive.py)

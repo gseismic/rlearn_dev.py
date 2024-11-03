@@ -19,7 +19,7 @@ pip install -e .
 | ✅ | DDPG | naive | VecEnv | DDPG | [demo](tests/methods/ddpg/test_ddpg_naive.py)
 | ✅ | TD3  | naive | VecEnv | Twin Delayed DDPG | [demo](tests/methods/td3/test_td3_naive.py)
 | ✅ | SAC  | naive | VecEnv | Soft Actor-Critic | [demo](tests/methods/sac/test_sac_naive.py)
-| ✅ | MCPG | basic |   Env  | Monto-Carlo REINFORCE | [demo](tests/methods/mcpg/test_mcpg_basic.py)
+| ✅ | MCPG | basic |   Env  | Monte-Carlo REINFORCE | [demo](tests/methods/mcpg/test_mcpg_basic.py)
 | ✅ | PPO  | draft | VecEnv | Proximal Policy Optimization | [demo](tests/methods/ppo/test_ppo_draft.py)
 
 ## Usages

@@ -1,8 +1,8 @@
 import torch
 import numpy as np
 from pathlib import Path
-from ...core.agent.main.online_agent import OnlineAgent
-from ...utils.optimizer import get_optimizer_class
+from ....core.agent.main.online_agent import OnlineAgent
+from ....utils.optimizer import get_optimizer_class
 from .network.api import get_model
 
 class QACAgent(OnlineAgent):

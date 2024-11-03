@@ -1,6 +1,6 @@
 import gymnasium as gym
 import matplotlib.pyplot as plt
-from rlearn_dev.methods.ac.qac_agent import QACAgent
+from rlearn_dev.methods.qac.naive.agent import QACAgent
 from rlearn_dev.utils.eval_agent import eval_agent_performance
 from rlearn_dev.utils.i18n import Translator
 from pathlib import Path

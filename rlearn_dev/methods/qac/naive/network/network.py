@@ -1,5 +1,5 @@
 import torch.nn as nn
-from ....utils.activation import get_activation_class
+from .....utils.activation import get_activation_class
 
 class IndependentActorCriticMLP(nn.Module):
     

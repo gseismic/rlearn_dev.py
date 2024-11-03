@@ -79,16 +79,24 @@ if __name__ == '__main__':
 ```
 
 ## TODO
+### Methods
+- [ ] SACT, SACT-v2
+- [ ] PPG (phasic policy gradient)
+- [ ] PPO-RND
+- [ ] tabular methods
+
+### Common
 - [ ] add more docs and tests
 - [ ] add more papers and references
-- [ ] add more envs
 - [ ] abstract nnblock
 - [ ] make `EnvPlayer` more flexible
 - [ ] more unified interfaces
-- [ ] SACT, SACT-v2
-- [ ] PPG (phasic policy gradient)
-- [ ] tabular methods
-- [ ] more envs
+- [ ] self-contained gymnasium-like(v1) envs
+- [ ] read source code [sb3-off-policy](https://github.com/DLR-RM/stable-baselines3/blob/06498e8be71b9c8aee38226176dbd28443afbb4f/stable_baselines3/common/off_policy_algorithm.py#L439)
+- [ ] process TimeLimit & modify ReplayBuffer [gym-time-limit](https://github.com/openai/gym/blob/master/gym/wrappers/time_limit.py#L19)
+- [ ] support multi-agent
+- [ ] support gymnasium-v1
+- [ ] support distributed training
 
 ## Reference
 ### Common
@@ -98,6 +106,7 @@ if __name__ == '__main__':
 - more: [awesome-rl](https://github.com/aikorea/awesome-rl)
 ### PPO
 - [Proximal Policy Optimization Algorithms](https://arxiv.org/abs/1707.06347)
+- [The 37 Implementation Details of Proximal Policy Optimization](https://iclr-blog-track.github.io/2022/03/25/ppo-implementation-details/)
 ### DDPG
 - [Continuous Control with Deep Reinforcement Learning](https://arxiv.org/abs/1509.02971)
 ### TD3
@@ -105,6 +114,15 @@ if __name__ == '__main__':
 - [Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor](https://arxiv.org/abs/1801.01290)
 ### C51
 - [Categorical DQN](https://arxiv.org/abs/1707.06887)
+
+## Tutorials for Reinforcement Learning
+- [@en policy-gradient](https://lilianweng.github.io/posts/2018-04-08-policy-gradient/)
+- [@zh LiuJianping](https://www.cnblogs.com/pinard)
+- [@en coach](https://intellabs.github.io/coach/components/agents/index.html)
+- [@en Deep Reinforcement Learning: An Overview](https://arxiv.org/pdf/1810.06339.pdf)
+- [@en google-scholar on RL](https://scholar.google.com/scholar?q=reinforcement+learning)
+- [@en stable-baselines3-contrib](https://github.com/Stable-Baselines-Team/stable-baselines3-contrib)
+- [@en Practical_RL](https://github.com/yandexdataschool/Practical_RL)
 
 ## ChangeLog
 - [@2024-10-02] v0.0.2 c51-naive

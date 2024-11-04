@@ -1,5 +1,13 @@
 # DQN
 
+## TODO
+- basic 
+- naive 
+- rainbow
+- main 
+- premium
+- research
+
 ## Reference
 ### Recommend
 

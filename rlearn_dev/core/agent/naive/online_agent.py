@@ -34,7 +34,7 @@ class OnlineAgent(BaseAgent):
 
     @abstractmethod
     def step(self, state, action, 
-             next_state, reward, done, truncated, info,
+             next_state, reward, terminated, truncated, info,
              *, episode_idx=None, global_step_idx=None, episode_step_idx=None):
         raise NotImplementedError()
     
@@ -122,13 +122,13 @@ class OnlineAgent(BaseAgent):
             while True:
                 step_kwargs = {'episode_step_idx': episode_step_idx, 'global_step_idx': global_step_idx}
                 action = self.select_action(state, **episode_kwargs, **step_kwargs)
-                next_state, reward, done, truncated, info = self.env.step(action)
-                trajectory_recorder.record_step(state, action, next_state, reward, done, truncated, info)
+                next_state, reward, terminated, truncated, info = self.env.step(action)
+                trajectory_recorder.record_step(state, action, next_state, reward, terminated, truncated, info)
                 episode_total_reward += reward
                 episode_rewards.append(reward)
                 
                 self.step(state, action, 
-                          next_state, reward, done, truncated, info,
+                          next_state, reward, terminated, truncated, info,
                           **episode_kwargs, **step_kwargs)
                 
                 episode_step_idx += 1
@@ -136,7 +136,7 @@ class OnlineAgent(BaseAgent):
                 
                 state = next_state
                 if (
-                    (done or truncated)
+                    (terminated or truncated)
                     or (max_episode_steps is not None and episode_step_idx >= max_episode_steps)
                 ):
                     break

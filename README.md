@@ -1,6 +1,9 @@
 # rlearn.dev
 A Reinforcement Learning Library [dev]
 
+in future, this repo will move to [rlean](http://github.com/gseismic/rlearn_dev.py)
+创建`rlearn_dev`的原因是: 最初开发rlearn.py时使用了自定义的非gym环境，包袱过重
+
 ## Installation
 ```bash
 pip install -e .
@@ -104,6 +107,7 @@ if __name__ == '__main__':
 - [CleanRL](https://github.com/vwxyzjn/cleanrl)
 - [Spinning Up](https://spinningup.openai.com/)
 - [Stable-Baselines3](https://github.com/DLR-RM/stable-baselines3)
+- [@zh 强化学习导论](https://hrl.boyuai.com/chapter/3/%E6%A8%A1%E4%BB%BF%E5%AD%A6%E4%B9%A0)
 - more: [awesome-rl](https://github.com/aikorea/awesome-rl)
 ### PPO
 - [Proximal Policy Optimization Algorithms](https://arxiv.org/abs/1707.06347)
@@ -124,7 +128,3 @@ if __name__ == '__main__':
 - [@en google-scholar on RL](https://scholar.google.com/scholar?q=reinforcement+learning)
 - [@en stable-baselines3-contrib](https://github.com/Stable-Baselines-Team/stable-baselines3-contrib)
 - [@en Practical_RL](https://github.com/yandexdataschool/Practical_RL)
-
-## ChangeLog
-- [@2024-10-02] v0.0.2 c51-naive
-- [@2024-11-03] v0.0.7 PPO-draft, DDPG-naive, TD3-naive, SAC-naive, QAC-naive

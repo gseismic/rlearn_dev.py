@@ -4,6 +4,9 @@
 [NoisyNet](https://arxiv.org/pdf/1706.10295)
 
 ## TODOs
+- [ ] SIL
+- [ ] PETS
+- [ ] MBPO
 - [ ] HER
 - [ ] ICM
 - [ ] RND
@@ -14,7 +17,34 @@
 - [ ] [Infinite horizon tasks are handled like episodic tasks](https://github.com/DLR-RM/stable-baselines3/issues/284)
 - [ ] [Time Limits in Reinforcement Learning](https://arxiv.org/pdf/1712.00378)
 
+### 关注点 Attention
+## Imatation Learning 模仿学习
+[THIRD-PERSON IMITATION LEARNING](https://arxiv.org/pdf/1703.01703)
+[逆课程学习（reverse curriculum learning）](https://zhuanlan.zhihu.com/p/453250696)
+
+### 目标强化学习
+[Multi-Goal Reinforcement Learning: Challenging Robotics Environments and Request for Research](https://arxiv.org/pdf/1802.09464)
+
+### Ornstein-Uhlenbeck噪声
+- [@zh 强化学习中Ornstein-Uhlenbeck噪声是鸡肋吗？](https://zhuanlan.zhihu.com/p/96720878)
+
+### AlphaStar
+[AlphaStar](https://datawhalechina.github.io/easy-rl/#/chapter13/chapter13?id=%e7%ac%ac13%e7%ab%a0-alphastar-%e8%ae%ba%e6%96%87%e8%a7%a3%e8%af%bb)
+[@zh AlphaStar](https://zhuanlan.zhihu.com/p/493713058)
+
 ## Methods
+
+### curriculum learning 课程学习
+[课程学习](https://datawhalechina.github.io/easy-rl/#/chapter10/chapter10?id=_103-%e8%af%be%e7%a8%8b%e5%ad%a6%e4%b9%a0)
+
+### UPGO
+[从Self-Trainig角度解读UPGO算法](https://zhuanlan.zhihu.com/p/453250696)
+
+### SIL
+- [模仿学习(Imitation Learning)入门指南](https://zhuanlan.zhihu.com/p/140348314)
+- [@zh self imitation learning](https://zhuanlan.zhihu.com/p/341543129)
+- [@zh self imitation learning](https://zhuanlan.zhihu.com/p/437387871)
+
 ### DSACT
 [official](https://github.com/Jingliang-Duan/DSAC-v2)
 [DSAC-T: Distributional Soft Actor-Critic with Three Refinements](https://arxiv.org/abs/2310.05858)
@@ -32,7 +62,6 @@
 ### Time Limits in Reinforcement Learning
 [Time Limits in Reinforcement Learning](https://arxiv.org/pdf/1712.00378)
 
-
 ## Reference
 - [pg-is-all-you-need](https://github.com/MrSyee/pg-is-all-you-need/blob/master/01.A2C.ipynb)
 - [gymnasium](https://gymnasium.farama.org/api/env/)
@@ -40,12 +69,8 @@
 - [Practical_RL](https://github.com/yandexdataschool/Practical_RL/blob/master/week09_policy_II/ppo.ipynb)
 - [spinningup](https://spinningup.openai.com/en/latest/spinningup/keypapers.html#id106)
 - [Welcome to Spinning Up in Deep RL](https://spinningup.openai.com/en/latest/)
-
-动手学强化学习
-https://hrl.boyuai.com/chapter/ending/
-
-蘑菇书EasyRL
-https://datawhalechina.github.io/easy-rl/#/chapter3/chapter3?id=_311-%e6%9c%89%e6%a8%a1%e5%9e%8b
+- [@zh 动手学强化学习](https://hrl.boyuai.com/chapter/ending/)
+- [@zh EasyRL](https://datawhalechina.github.io/easy-rl/#/chapter3/chapter3?id=_311-%e6%9c%89%e6%a8%a1%e5%9e%8b)
 
 Intrinsic Curiosity Module (ICM).
 cited: 2850
@@ -80,11 +105,9 @@ n-step reinforcement learning
 https://gibberblot.github.io/rl-notes/single-agent/n-step.html
 
 ## TO-CHECK
-cleanba
-https://github.com/vwxyzjn/cleanba
-
-cleanrl
-https://github.com/vwxyzjn/cleanrl/blob/master/cleanrl/ppo.py#L147 
+- [cleanba](https://github.com/vwxyzjn/cleanba)
+- [cleanrl](https://github.com/vwxyzjn/cleanrl)
+- [cleanrl ppo](https://github.com/vwxyzjn/cleanrl/blob/master/cleanrl/ppo.py#L147)
 
 - [基于策略梯度的深度强化学习](https://yuancl.github.io/2019/02/02/rl/%E5%9F%BA%E4%BA%8E%E7%AD%96%E7%95%A5%E6%A2%AF%E5%BA%A6%E7%9A%84%E6%B7%B1%E5%BA%A6%E5%BC%BA%E5%8C%96%E5%AD%A6%E4%B9%A0/)
 

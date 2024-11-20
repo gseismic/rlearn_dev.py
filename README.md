@@ -1,7 +1,7 @@
 # rlearn.dev
 A Reinforcement Learning Library [dev]
 
-in future, this repo will move to [rlean](http://github.com/gseismic/rlearn_dev.py)
+in future, this repo will move to [rlearn](http://github.com/gseismic/rlearn.py)
 创建`rlearn_dev`的原因是: 最初开发rlearn.py时使用了自定义的非gym环境，包袱过重
 
 ## Installation

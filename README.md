@@ -1,7 +1,7 @@
 # rlearn.dev
 A Reinforcement Learning Library [dev]
 
-in future, this repo will move to [rlearn](http://github.com/gseismic/rlearn.py)
+In the future, this repo will move to [rlearn](http://github.com/gseismic/rlearn.py)
 创建`rlearn_dev`的原因是: 最初开发rlearn.py时使用了自定义的非gym环境，包袱过重
 
 ## Installation
@@ -10,9 +10,9 @@ pip install -e .
 ```
 
 ## Versions
-- draft: draft version, used for design algorithm, api-not-stable but working
-- naive: naive version, raw implementation with raw or minor optimization, could be used for benchmark
-- main: stable version, ready for production, with more docs and tests
+- draft: Draft version, used for designing algorithms, API-not-stable but working
+- naive: Naive version, raw implementation with raw or minor optimizations, could be used for benchmarking
+- main: Stable version, ready for production, with more docs and tests
 
 ## Methods
 | state | Agent | version | env | description | demo |   

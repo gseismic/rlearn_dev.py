@@ -14,6 +14,30 @@ pip install -e .
 - naive: Naive version, raw implementation with raw or minor optimizations, could be used for benchmarking
 - main: Stable version, ready for production, with more docs and tests
 
+## showcase
+### MuJoco-ant-v5
+使用`rlearn_dev`的naive版本SAC训练mujoco Ant-v5，含主动添加的噪音下，训练得分6000+
+trained by naive.SAC, with deterministic=False, score=6000+
+
+对比第三方知名库[ElegantRL](https://github.com/AI4Finance-Foundation/ElegantRL), benchmark: [用GPU并行环境Isaac Gym 训练机器人Ant，3小时6000分，最高12000分（代码开源](https://zhuanlan.zhihu.com/p/508378146)
+![ant-sac](./docs/ant_sac.gif)
+
+训练log，因为训练时需要探索，使用的是deterministic=False参数主动加入随机性，实际使用时去掉随机性，效果会更好
+```
+2024-11-23 07:45:24 | INFO   | Episode 2019/5000 [4134912]: Average Reward: 5611.59677, detail: [6339.41974365 6330.48039567 6412.41894184 6317.87476665 6403.85789968
+   99.67731813 6430.00267087 6559.04241766]
+2024-11-23 07:45:41 | INFO   | Episode 2020/5000 [4136960]: Average Reward: 6320.81176, detail: [6131.89531841 6141.40146106 6371.71031779 6146.98573506 6462.2939436
+ 6572.73806615 6467.93920164 6271.53004489]
+2024-11-23 07:45:59 | INFO   | Episode 2021/5000 [4139008]: Average Reward: 6108.65877, detail: [6366.46026193 6499.5197772  3587.1468893  6650.29738074 6514.41845971
+ 6469.3829467  6313.48620102 6468.5582827 ]
+2024-11-23 07:46:17 | INFO   | Episode 2022/5000 [4141056]: Average Reward: 6082.90059, detail: [3445.91923514 6416.88338573 6495.99878767 6572.26091719 6577.24471379
+ 6474.37533201 6336.68020873 6343.8421299 ]
+2024-11-23 07:46:35 | INFO   | Episode 2023/5000 [4143104]: Average Reward: 6054.10073, detail: [6386.18024652 6042.66135112 6577.68305068 6432.44589925 6414.15561133
+ 6458.69392698 3451.87516831 6669.11062416]
+2024-11-23 07:46:53 | INFO   | Episode 2024/5000 [4145152]: Average Reward: 6399.13154, detail: [6017.71464908 6581.0859381  6549.04273248 6514.8605336  6270.06884443
+ 6471.11665318 6546.70169277 6242.46127681]
+```
+
 ## Methods
 | state | Agent | version | env | description | demo |   
 |:---:|:---:|:---:|:---|:---|:---|
@@ -23,7 +47,7 @@ pip install -e .
 | ✅ | TD3  | naive | VecEnv | Twin Delayed DDPG | [demo](tests/methods/td3/test_td3_naive.py)
 | ✅ | SAC  | naive | VecEnv | Soft Actor-Critic | [demo](tests/methods/sac/test_sac_naive.py)
 | ✅ | MCPG | basic |   Env  | Monte-Carlo REINFORCE | [demo](tests/methods/mcpg/test_mcpg_basic.py)
-| ✅ | PPO  | draft | VecEnv | Proximal Policy Optimization | [demo](tests/methods/ppo/test_ppo_draft.py)
+| ✅ | PPO  | naive | VecEnv | Proximal Policy Optimization | [demo](tests/methods/ppo/test_ppo_draft.py)
 
 ## Usages
 ```python

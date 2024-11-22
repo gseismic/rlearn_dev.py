@@ -45,7 +45,7 @@ class OnlineAgentVE(BaseAgent):
               checkpoint_freq=None,
               checkpoint_dir='checkpoints',
               final_model_name=None,
-              final_model_dir='final_model'):
+              final_model_dir='final_models'):
         """
         avg_reward := avg reward of all environments in recent reward_window_size episodes
         exit if any:

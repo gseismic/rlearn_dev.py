@@ -219,9 +219,13 @@ class SACAgent(OnlineAgent):
             'critic2': self.critic2.state_dict(),
         }
         
-    def predict(self, state, deterministic=None):
-        if deterministic is not None:
-            warn(f'deterministic={deterministic} parameter is ignored in the current implementation')
+    def predict(self, state, deterministic=True):
+        # if deterministic is not None:
+        #     warn(f'deterministic={deterministic} parameter is ignored in the current implementation')
         state = torch.FloatTensor(np.array(state)).to(self.device)
-        action = self.actor(state)
-        return action.detach().cpu().numpy()
+        state = state.unsqueeze(0) # (1, *state_shape)
+        with torch.no_grad():
+            action, _, _ = self.actor.get_action(
+                state, compute_log_prob=False, compute_mean=False, deterministic=deterministic
+            )
+        return action.detach().squeeze(0).cpu().numpy()

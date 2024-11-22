@@ -102,6 +102,15 @@ if __name__ == '__main__':
 - [ ] support gymnasium-v1
 - [ ] support distributed training
 
+## 可能遇到的问题 Frequently Asked Questions
+### 无法录制视频 Unable to record videos
+最新版本的gymnasium依赖的moviepy有一些问题  Latest version of gymnasium depends on moviepy with some issues
+```bash
+1. pip install --upgrade decorator==4.0.2
+2. pip uninstall moviepy decorator
+3. pip install moviepy
+```
+
 ## Reference
 ### Common
 - [CleanRL](https://github.com/vwxyzjn/cleanrl)

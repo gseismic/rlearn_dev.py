@@ -67,12 +67,18 @@ class Actor(nn.Module):
         log_std = self.log_std_min + 0.5 * (self.log_std_max - self.log_std_min) * (log_std + 1) 
         return mean, log_std
 
-    def get_action(self, x, *, compute_log_prob: bool = True, compute_mean: bool = False):
+    def get_action(self, x, *,
+                   compute_log_prob: bool = True,
+                   compute_mean: bool = False,
+                   deterministic: bool = False):
         mean, log_std = self(x)
         std = log_std.exp()
-        normal = torch.distributions.Normal(mean, std)
-        x_t = normal.rsample()  # for reparameterization trick (mean + std * N(0,1))
-        y_t = torch.tanh(x_t)
+        if deterministic is False: 
+            normal = torch.distributions.Normal(mean, std)
+            x_t = normal.rsample()  # for reparameterization trick (mean + std * N(0,1))
+            y_t = torch.tanh(x_t)
+        else:
+            y_t = mean
         action = y_t * self.action_scale + self.action_bias
         # ∫p_action(a)da = ∫p_y(y) * |dy/da| da = ∫p_x(x) * |dx/dy| * |dy/da| da
         # x_t (normal distribution) -> y_t = tanh(x_t) -> action = y_t * action_scale + action_bias

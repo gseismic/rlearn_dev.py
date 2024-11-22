@@ -1,5 +1,6 @@
 drafts/
 checkpoints/
+final_model/
 final_models/
 *.pth
 *.zip

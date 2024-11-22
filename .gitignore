@@ -2,6 +2,7 @@ drafts/
 checkpoints/
 final_model/
 final_models/
+videos/
 *.pth
 *.zip
 backup/

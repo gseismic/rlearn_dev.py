@@ -49,13 +49,19 @@ class SACAgent(OnlineAgent):
         self.policy_grad_norm_clip = self.config['policy_grad_norm_clip']
         self.critic_grad_norm_clip = self.config['critic_grad_norm_clip']
         self.alpha_grad_norm_clip = self.config['alpha_grad_norm_clip']
+
+        print('d', self.device)
         
-        self.actor = get_actor(self.state_space, self.action_space)
-        self.critic1 = get_critic(self.state_space, self.action_space)
+        self.actor = get_actor(self.state_space,
+                               self.action_space).to(self.device)
+        self.critic1 = get_critic(self.state_space,
+                                  self.action_space).to(self.device)
         self.critic2 = get_critic(self.state_space, self.action_space) # new compared to naive.DDPG
         # self.target_actor = get_actor(self.state_space, self.action_space)
-        self.target_critic1 = get_critic(self.state_space, self.action_space)
-        self.target_critic2 = get_critic(self.state_space, self.action_space) # new compared to naive.DDPG
+        self.target_critic1 = get_critic(self.state_space,
+                                         self.action_space).to(self.device)
+        self.target_critic2 = get_critic(self.state_space,
+                                         self.action_space).to(self.device) # new compared to naive.DDPG
         self._update_target_networks(tau=1.0) # copy critic
 
         self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=self.config['actor_lr'])
@@ -121,11 +127,11 @@ class SACAgent(OnlineAgent):
         batch = self.replay_buffer.sample(batch_size, copy=True)
         batch_size = batch.states.shape[0] # if buffer not full, batch_size < batch_size
         # batch.states: (batch_size, *state_shape)
-        states = batch.states
-        actions = batch.actions
-        rewards = batch.rewards
-        next_states = batch.next_states
-        dones = batch.dones
+        states = batch.states.to(self.device)
+        actions = batch.actions.to(self.device)
+        rewards = batch.rewards.to(self.device)
+        next_states = batch.next_states.to(self.device)
+        dones = batch.dones.to(self.device)
 
         # compute target q value
         with torch.no_grad():
@@ -200,6 +206,8 @@ class SACAgent(OnlineAgent):
     def _update_target_networks(self, tau=None):
         tau = self.tau if tau is None else tau
         # polyak_update(self.actor.parameters(), self.target_actor.parameters(), tau)
+        print('1', self.critic1.device, self.target_critic1.device)
+        print(self.critic2.device, self.target_critic2.device)
         polyak_update(self.critic1.parameters(), self.target_critic1.parameters(), tau)
         polyak_update(self.critic2.parameters(), self.target_critic2.parameters(), tau)
         

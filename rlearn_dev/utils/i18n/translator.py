@@ -1,9 +1,9 @@
-from typing import Dict
+from typing import Dict, Optional, Union
 from .dictionary import dictionary as default_dictionary
 
 class Translator:
     def __init__(self, to_lang='en',
-                 dictionary: Dict[str, Dict[str, str]] | None = None):
+                 dictionary: Optional[Dict[str, Dict[str, str]]] = None):
         self.to_lang = to_lang
         self.dictionary = dictionary or default_dictionary
     
@@ -30,7 +30,8 @@ class Translator:
     def set_dictionary(self, dictionary: Dict[str, Dict[str, str]]):
         self.dictionary = dictionary
 
-def translate(key, lang='en', dictionary: Dict[str, Dict[str, str]] | Translator | None = None):
+# def translate(key, lang='en', dictionary: Optional[Union[Dict[str, Dict[str, str]]], Translator] = None):
+def translate(key, lang='en', dictionary= None):
     if isinstance(dictionary, Translator):
         return dictionary.translate(key, lang)
     elif isinstance(dictionary, dict):

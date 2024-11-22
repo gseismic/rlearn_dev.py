@@ -16,6 +16,7 @@ def polyak_update(params: Iterable[torch.Tensor], target_params: Iterable[torch.
     # from stable_baselines3.common.utils import polyak_update
     assert isinstance(tau, float) and 0 <= tau <= 1, "tau must be a float between 0 and 1"
     with torch.no_grad():
+        # print('targ', target_params.device, 'par', params.device)
         for param, target_param in zip_strict(params, target_params):
             target_param.data.mul_(1 - tau)
             torch.add(target_param.data, param.data, alpha=tau, out=target_param.data)

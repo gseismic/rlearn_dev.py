@@ -119,7 +119,7 @@ class OnlineAgentVE(BaseAgent):
                 self.logger.info(f"Episode {exit_monitor.episode_count}/{max_epochs}: {tr('average_reward')}: {np.mean(episode_reward)}, detail: {episode_reward}")
 
             if should_exit:
-                self.logger.info(f'{tr('exit_reason')}: {tr(exit_reason)}')
+                self.logger.info(f"{tr('exit_reason')}: {tr(exit_reason)}")
                 break
             
             if ep_should_exit:

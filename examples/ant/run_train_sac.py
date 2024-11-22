@@ -5,7 +5,7 @@ from rlearn_dev.methods.sac.naive import SACAgent as Agent
 def make_env(env_id, seed, idx, capture_video, run_name):
     def _make_env():
         if capture_video and idx == 0:
-            env = gym.make(env_id, render_mode="rgb_array")
+            env = gym.make(env_id, render_mode="rgb_array", width=500, height=500)
             env = gym.wrappers.RecordVideo(
                 env,
                 f"videos/{run_name}",
@@ -22,17 +22,17 @@ def make_env(env_id, seed, idx, capture_video, run_name):
     return _make_env
 
 def main():
-    capture_video = True
-    run_name = 'sac_ant_autotune'
-    num_envs = 128
+    capture_video = False
+    run_name = 'sac_ant_autotune2'
+    num_envs = 8 # 128
     env_id = 'Ant-v5'
     env = gym.vector.SyncVectorEnv([make_env(env_id, 36, i, capture_video, run_name)
                                      for i in range(num_envs)])
     g_seed = 36
     config = {
         'gamma': 0.99,
-        'batch_size': 64,
-        'tau': 0.005,
+        'batch_size': 32, # ** 32
+        'tau': 0.01, #0.005,
         'actor_lr': 0.0003,
         'critic_lr': 0.0003,
         'buffer_size': 100_000,
@@ -41,11 +41,13 @@ def main():
     }
     agent = Agent(env, config=config, seed=g_seed)
     learn_config = {
-        'max_episodes': 2, # 100_000//2048,
+        'max_episodes': 2000, # 100_000//2048,
         'max_episode_steps': 2048,
         'max_total_steps': 1000_000,
         'verbose_freq': 1,
-        'final_model_name': 'ant_sac.pth',
+        'checkpoint_freq': 10,
+        'checkpoint_dir': 'models/checkpoint/ant_sac2',
+        'final_model_name': 'ant_sac2.pth',
         'final_model_dir': 'final_models'
     }
     agent.learn(**learn_config)

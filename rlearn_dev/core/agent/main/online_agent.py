@@ -127,7 +127,7 @@ class OnlineAgent(BaseAgent):
                 self.logger.info(f"Episode {exit_monitor.episode_count}/{max_episodes}: {tr('total_reward')}: {episode_reward}")
             
             if should_exit:
-                self.logger.info(f'{tr('exit_reason')}: {tr(exit_reason)}')
+                self.logger.info(f"{tr('exit_reason')}: {tr(exit_reason)}")
                 break
 
             if checkpoint_freq and exit_monitor.episode_count % checkpoint_freq == 0:

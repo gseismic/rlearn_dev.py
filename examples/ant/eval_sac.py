@@ -3,10 +3,15 @@ from rlearn_dev.methods.sac.naive import SACAgent as Agent
 from gymnasium.wrappers import RecordEpisodeStatistics, RecordVideo
 
 env_id = 'Ant-v5'
-env = gym.make(env_id, render_mode="rgb_array")
-agent = Agent.load(path='./final_models/ant_sac.pth', env=env)
+# env = gym.make(env_id, render_mode="rgb_array", xml_file='./ant_v5.xml')
+env = gym.make(env_id, render_mode="rgb_array", width=500, height=500)
+env = RecordVideo(env, video_folder="videos/ant_random", name_prefix="eval",
+                  episode_trigger=lambda x: True)
 
-num_eval_episodes = 50
+
+agent = Agent.load(path='./final_models/ant_sac2.pth', env=env)
+
+num_eval_episodes = 3
 # env = RecordVideo(env, video_folder="videos/ant_sac_eval", name_prefix="eval",
 #                   episode_trigger=lambda x: True)
 env = RecordEpisodeStatistics(env, buffer_length=num_eval_episodes)

@@ -8,8 +8,7 @@ from .network.discrete import ActorCritic as ActorCriticDiscrete
 from .network.continous import ActorCritic as ActorCriticContinous
 
 class PPOAgent(OnlineAgentVE):
-    """draft but work
-    """
+
     def __init__(self, env, config, logger=None, seed=None, **kwargs):
         super().__init__(env, config, logger=logger, seed=seed, **kwargs)
         
@@ -234,7 +233,7 @@ class PPOAgent(OnlineAgentVE):
                     with torch.no_grad():
                         # `http://joschu.net/blog/kl-approx.html`
                         approx_kl = ((ratio - 1) - logratio).mean()
-                        approx_kls += [approx_kl]
+                        approx_kls += [approx_kl.cpu().item()]
                         clipfrac = ((ratio - 1.0).abs() > self.clip_coef).float().mean().item()
                         clipfracs += [clipfrac]
                     
@@ -292,9 +291,9 @@ class PPOAgent(OnlineAgentVE):
                     self.logger.debug(
                         f'\tepoch:{epoch:2d}:{iloop+1}/{recommended_num_loops} approx_kl:{np.mean(approx_kls):<7.5f} '
                         f"mbs:{local_minibatch_size} frac:{clipfrac:<5.3f} "
-                        f"vfrac:{v_clipfrac:<5.2f} loss:{loss.item():<8.3f} "
-                        f"pg:{pg_loss.item():<8.3f} ent:{entropy_loss.item():<8.5f} "
-                        f" kl:{kl_loss.item():<7.5f} v:{v_loss.item():<8.3f}"
+                        f"vfrac:{v_clipfrac:<5.2f} loss:{loss.cpu().item():<8.3f} "
+                        f"pg:{pg_loss.detach().cpu().item():<8.3f} ent:{entropy_loss.detach().cpu().item():<8.5f} "
+                        f" kl:{kl_loss.cpu().item():<7.5f} v:{v_loss.cpu().item():<8.3f}"
                     )
                     # self._debug_test()
                 if self.clipfrac_stop is not None and len(clipfracs) > 3 and np.mean(clipfracs[-3:]) >= self.clipfrac_stop:
@@ -308,12 +307,12 @@ class PPOAgent(OnlineAgentVE):
                     break
                 
                 if self.kl_stop is not None and approx_kl > self.kl_stop:
-                    self.logger.debug(f"Early stopping at step {epoch} due to reaching max kl: {approx_kl}")
+                    self.logger.debug(f"Early stopping at step {epoch} due to reaching max kl: {approx_kl.detach().cpu().item()}")
                     exit_this_train = True
                     break
                 
                 if self.target_kl is not None and approx_kl > self.target_kl:
-                    self.logger.info(f"Early stopping Program at step {epoch} due to reaching max kl: {approx_kl}")
+                    self.logger.info(f"Early stopping Program at step {epoch} due to reaching max kl: {approx_kl.detach().cpu().item()}")
                     exit_this_train = True
                     should_exit_program = True
                     break

@@ -19,7 +19,10 @@ pip install -e .
 使用`rlearn_dev`的naive版本SAC训练mujoco Ant-v5，含主动添加的噪音下，训练得分6000+
 trained by naive.SAC, with deterministic=False, score=6000+
 
-对比第三方知名库[ElegantRL](https://github.com/AI4Finance-Foundation/ElegantRL), benchmark: [用GPU并行环境Isaac Gym 训练机器人Ant，3小时6000分，最高12000分（代码开源](https://zhuanlan.zhihu.com/p/508378146)
+对比第三方知名库[ElegantRL](https://github.com/AI4Finance-Foundation/ElegantRL)
+benchmark: [用GPU并行环境Isaac Gym 训练机器人Ant，3小时6000分，最高12000分（代码开源](https://zhuanlan.zhihu.com/p/508378146)
+
+gif:
 ![ant-sac](./docs/ant_sac.gif)
 
 训练log，因为训练时需要探索，使用的是deterministic=False参数主动加入随机性，实际使用时去掉随机性，效果会更好

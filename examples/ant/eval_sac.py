@@ -11,7 +11,7 @@ env = RecordVideo(env, video_folder="videos/ant_random", name_prefix="eval",
 
 agent = Agent.load(path='./final_models/ant_sac2.pth', env=env)
 
-num_eval_episodes = 3
+num_eval_episodes = 30
 # env = RecordVideo(env, video_folder="videos/ant_sac_eval", name_prefix="eval",
 #                   episode_trigger=lambda x: True)
 env = RecordEpisodeStatistics(env, buffer_length=num_eval_episodes)

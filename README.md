@@ -23,7 +23,6 @@ trained by naive.SAC, with deterministic=False, score=6000+
 
 对比第三方知名库[ElegantRL](https://github.com/AI4Finance-Foundation/ElegantRL)
 benchmark: [用GPU并行环境Isaac Gym 训练机器人Ant，3小时6000分，最高12000分（代码开源](https://zhuanlan.zhihu.com/p/508378146)
-(因为训练时需要探索，使用的是deterministic=False参数主动加入随机性，实际使用时去掉随机性，效果会更好)
 
 训练log:
 ```
@@ -58,7 +57,7 @@ import gymnasium as gym
 from rlearn_dev.methods.sac.naive.agent import SACAgent as Agent
 
 def make_env(env_id, seed, idx, capture_video, run_name):
-    def thunk():
+    def _make_env():
         if capture_video and idx == 0:
             env = gym.make(env_id, render_mode="rgb_array")
             env = gym.wrappers.RecordVideo(
@@ -74,7 +73,7 @@ def make_env(env_id, seed, idx, capture_video, run_name):
         env.action_space.seed(seed)
         return env
 
-    return thunk
+    return _make_env
 
 def test_sac_naive_autotune():
     capture_video = True

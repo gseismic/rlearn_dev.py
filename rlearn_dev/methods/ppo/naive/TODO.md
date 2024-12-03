@@ -10,3 +10,6 @@
                 if len(next_obs.shape) == 1:
                     next_obs = next_obs.reshape(-1, 1)
 ```
+- [ ] ActorContinuous 确保在有效范围内，action low 和 high 是否正确，裁剪，是否应该加bound+/-eps，然后裁剪
+      这样有助于获得边界动作
+

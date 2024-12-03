@@ -82,7 +82,6 @@ class OnlineAgentVE(BaseAgent):
         if len(states.shape) == 1:
             states = states.reshape(-1, 1)
         # print(states)
-        # raise
         self.before_learn(states, infos, max_epochs=max_epochs, steps_per_epoch=steps_per_epoch)
         total_steps = 0
         start_time = time.time()

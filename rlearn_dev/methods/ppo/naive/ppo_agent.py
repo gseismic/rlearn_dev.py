@@ -61,7 +61,7 @@ class PPOAgent(OnlineAgentVE):
         if isinstance(self.single_action_space, gym.spaces.Box):
             self.logger.info(f'Use continuous action space: {self.single_action_space=}')
             self.actor_critic = ActorCriticContinous(self.state_dim, 
-                                                     self.single_action_space.shape,
+                                                     self.single_action_space, #.shape,
                                                      rpo_alpha=self.rpo_alpha).to(self.device)
         else:
             self.logger.info(f'Use discrete action space: {self.single_action_space=}')
@@ -147,11 +147,10 @@ class PPOAgent(OnlineAgentVE):
         #     self.next_state = None
         self.next_state = torch.Tensor(next_state).to(self.device)
         self.next_done = torch.Tensor(next_done).to(self.device)
-    
-        if "final_info" in infos:
-            for info in infos["final_info"]:
-                if info and "episode" in info:
-                    print(f"{epoch=}, {epoch_step=}, episodic_return={info['episode']['r']}")
+        # if "final_info" in infos:
+        #     for info in infos["final_info"]:
+        #         if info and "episode" in info:
+        #             self.logger.debug(f"{epoch=}, {epoch_step=}, episodic_return={info['episode']['r']}")
                     
     def _compute_gae_and_returns(self, rewards, dones, values, next_state, next_done, device):
         """Compute GAE and returns
@@ -358,7 +357,6 @@ class PPOAgent(OnlineAgentVE):
     
     def predict(self, state, deterministic=False):
         # for single env
-        print('**', state)
         if np.isscalar(state):
             state = np.array([state])
         assert state.shape == self.state_dim

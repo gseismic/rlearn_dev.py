@@ -27,7 +27,7 @@ def eval_agent_performance(agent,
         episode_length = 0
         for step in range(max_steps):
             action, _ = agent.predict(state, deterministic=deterministic)
-            # print('action', action, type(action))
+            # print(action)
             next_state, reward, done, truncated, _ = env.step(action)
             episode_reward += reward
             episode_length += 1

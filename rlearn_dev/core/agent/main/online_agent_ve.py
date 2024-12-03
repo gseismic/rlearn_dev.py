@@ -107,11 +107,16 @@ class OnlineAgentVE(BaseAgent):
             for epoch_step in range(steps_per_epoch):
                 actions = self.select_action(states, epoch_step=epoch_step)
                 (next_obs, rewards, terminates, truncates, infos) = self.env.step(actions)
-                # print(f'**{rewards=}')
+                dones = np.logical_or(terminates, truncates)
+                
+                # 只有episode结束，且next_obs为None时，才用全零状态代替
+                next_obs = np.array([
+                    np.zeros(self.single_observation_space.shape)
+                    if done and obs is None else obs 
+                    for obs, done in zip(next_obs, dones)
+                ])
                 if len(next_obs.shape) == 1:
                     next_obs = next_obs.reshape(-1, 1)
-                    
-                dones = np.logical_or(terminates, truncates)
                 
                 vec_episode_rewards += rewards
                 vec_episode_lengths += 1

@@ -138,7 +138,15 @@ class PPOAgent(OnlineAgentVE):
         next_done = np.logical_or(terminates, truncates)
         assert rewards.shape == (self.num_envs, )
         self.rewards[epoch_step] = torch.tensor(rewards).to(self.device) # removed: .view(-1)
-        self.next_state, self.next_done = torch.Tensor(next_state).to(self.device), torch.Tensor(next_done).to(self.device)
+        
+        # OnlineAgentVE 的 next_obs 已经处理
+        # print('next_state', next_state)
+        # if next_state is not None:
+        #     self.next_state = torch.Tensor(next_state).to(self.device)
+        # else:
+        #     self.next_state = None
+        self.next_state = torch.Tensor(next_state).to(self.device)
+        self.next_done = torch.Tensor(next_done).to(self.device)
     
         if "final_info" in infos:
             for info in infos["final_info"]:
@@ -350,6 +358,7 @@ class PPOAgent(OnlineAgentVE):
     
     def predict(self, state, deterministic=False):
         # for single env
+        print('**', state)
         if np.isscalar(state):
             state = np.array([state])
         assert state.shape == self.state_dim

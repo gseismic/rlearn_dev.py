@@ -13,9 +13,16 @@ class PPOAgent(OnlineAgentVE):
         super().__init__(env, config, logger=logger, seed=seed, **kwargs)
         
     def initialize(self, *args, **kwargs):
-        self.num_envs = self.env.num_envs
-        self.single_observation_space = self.env.single_observation_space
-        self.single_action_space = self.env.single_action_space
+        self.is_single_env = not hasattr(self.env, 'num_envs')
+        if self.is_single_env:
+            self.num_envs = 1
+            self.single_observation_space = self.env.observation_space
+            self.single_action_space = self.env.action_space
+        else:
+            self.num_envs = self.env.num_envs
+            self.single_observation_space = self.env.single_observation_space
+            self.single_action_space = self.env.single_action_space
+        
         if len(self.single_observation_space.shape) == 0:
             self.state_dim = (1,)
         else:

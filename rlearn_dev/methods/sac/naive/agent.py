@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import numpy as np
-from warnings import warn
 from cfgdict import Schema, Field
 from ....core.agent.naive.vector import OnlineAgent
 from ....utils.misc import polyak_update
@@ -26,9 +25,9 @@ class SACAgent(OnlineAgent):
         policy_frequency=Field(type='int', default=2, ge=0),
         policy_update_steps=Field(type='int', default=2, ge=1), # new compared to naive.TD3
         tau=Field(type='float', default=0.005, ge=0, le=1),
-        exploration_noise=Field(type='float', default=0.1, ge=0, le=1),
-        policy_noise=Field(type='float', default=0.2, ge=0, le=1), 
-        noise_clip=Field(type='float', default=0.5, ge=0, le=1), 
+        # exploration_noise=Field(type='float', default=0.1, ge=0, le=1),
+        # policy_noise=Field(type='float', default=0.2, ge=0, le=1), 
+        # noise_clip=Field(type='float', default=0.5, ge=0, le=1), 
         policy_grad_norm_clip=Field(type='float', default=1.0, ge=0),
         critic_grad_norm_clip=Field(type='float', default=1.0, ge=0),
         autotune=Field(type='bool', default=True), # new compared to naive.TD3
@@ -231,4 +230,5 @@ class SACAgent(OnlineAgent):
             action, _, _ = self.actor.get_action(
                 state, compute_log_prob=False, compute_mean=False, deterministic=deterministic
             )
-        return action.detach().squeeze(0).cpu().numpy()
+        info = {}
+        return action.detach().squeeze(0).cpu().numpy(), info

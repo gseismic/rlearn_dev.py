@@ -8,9 +8,9 @@ class BaseNoisyLinear(nn.Module):
     BaseNoisyLinear 是 NoisyLinear 和 FactorisedNoisyLinear 的基类。
     它实现了两个类共有的方法和属性。
     """
-    def __init__(self, 
-                 in_features: int, 
-                 out_features: int, 
+    def __init__(self,
+                 in_features: int,
+                 out_features: int,
                  init_method: str = 'kaiming',
                  std_init: float = 0.5,
                  exploration_factor: float = 1.0,

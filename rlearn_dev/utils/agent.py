@@ -1,3 +1,4 @@
+import copy
 
 def generate_episode(env, agent, deterministic, max_episode_steps=None):
     """生成一个episode"""

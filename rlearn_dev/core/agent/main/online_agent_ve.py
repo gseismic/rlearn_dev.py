@@ -3,6 +3,7 @@ import time
 import uuid
 import numpy as np
 from pathlib import Path
+from collections import deque
 from .base_agent import BaseAgent
 from ....utils.i18n import Translator
 # from ....utils.exit_monitor.exit_monitor_ve import ExitMonitorVE
@@ -85,38 +86,77 @@ class OnlineAgentVE(BaseAgent):
         self.before_learn(states, infos, max_epochs=max_epochs, steps_per_epoch=steps_per_epoch)
         total_steps = 0
         start_time = time.time()
-        episode_reward = np.ones(self.num_envs)*float('-inf')
-        episode_reward_rolling = np.ones(self.num_envs)*float('-inf')
+        # vec_episode_dones = np.zeros(self.num_envs, dtype=bool)
+
+        vec_episode_rewards = np.zeros(self.num_envs)
+        vec_episode_lengths = np.zeros(self.num_envs)
+        # 因为是参数共享，所以直接对最近的reward求平均
+        rolling_episode_rewards = deque(maxlen=reward_window_size)
+        rolling_episode_lengths = deque(maxlen=reward_window_size)
+        latest_episode_reward = np.nan
+        latest_episode_length = np.nan
+        total_episode_rewards = 0
+        total_episode_lengths = 0
         for epoch in range(max_epochs):
             self.before_episode(epoch=epoch)
+            # 不能在此reset，因为 steps_per_epoch不是真正的结束
+            # vec_episode_rewards.fill(0) # reset
+            # vec_episode_lengths.fill(0) # reset
+            # avg_episode_perstep_reward = np.nan
+            # avg_episode_reward = np.nan
             for epoch_step in range(steps_per_epoch):
                 actions = self.select_action(states, epoch_step=epoch_step)
                 (next_obs, rewards, terminates, truncates, infos) = self.env.step(actions)
                 # print(f'**{rewards=}')
                 if len(next_obs.shape) == 1:
                     next_obs = next_obs.reshape(-1, 1)
+                    
                 dones = np.logical_or(terminates, truncates)
-                # print(f'{terminates=}')
-                # print(f'{truncates=}')
-                reward_initialized = episode_reward_rolling != float('-inf')
-                episode_reward_rolling[reward_initialized] += np.array(rewards[reward_initialized])
-                episode_reward_rolling[~reward_initialized] = np.array(rewards[~reward_initialized])
+                
+                vec_episode_rewards += rewards
+                vec_episode_lengths += 1
+                
+                # vec_episode_dones[~dones] = False
+                # vec_episode_dones[dones] = True
+                if any(dones):
+                    # 因为参数共享，所以直接对最近的reward求平均
+                    # rolling_episode_rewards.append(np.mean(vec_episode_rewards[dones]))
+                    # rolling_episode_lengths.append(np.mean(vec_episode_lengths[dones]))
+                    rolling_episode_rewards.extend(vec_episode_rewards[dones])
+                    rolling_episode_lengths.extend(vec_episode_lengths[dones])
+                    latest_episode_reward = rolling_episode_rewards[-1]
+                    latest_episode_length = rolling_episode_lengths[-1]
+                    total_episode_rewards += np.sum(vec_episode_rewards[dones])
+                    total_episode_lengths += np.sum(vec_episode_lengths[dones])
+                # avg_episode_perstep_reward = np.nanmean(vec_episode_rewards[dones] / vec_episode_lengths[dones])
+                # avg_episode_reward = np.nanmean(rolling_episode_rewards)
+                vec_episode_rewards[dones] = 0 # reset
+                vec_episode_lengths[dones] = 0 # reset
                 total_steps += 1
                 
                 self.step(next_obs, rewards, terminates, truncates, infos,
                           epoch=epoch, epoch_step=epoch_step)
                 
-                # print(episode_reward)
-                # print('rolling', episode_reward_rolling)
-                # episode_reward[~dones] = np.max(np.stack([episode_reward[~dones], episode_reward_rolling[~dones]]), axis=0)
-                episode_reward[dones] = episode_reward_rolling[dones]
-                episode_reward_rolling[dones] = float('-inf')
                 states = next_obs
 
-            ep_should_exit, episode_info = self.after_episode(epoch=epoch, episode_reward=episode_reward)
-            should_exit, exit_reason = exit_monitor.should_exit(np.mean(episode_reward))
-            if exit_monitor.episode_count % verbose_freq == 0:  
-                self.logger.info(f"Episode {exit_monitor.episode_count}/{max_epochs}: {tr('average_reward')}: {np.mean(episode_reward)}, detail: {episode_reward}")
+            ep_should_exit, episode_info = self.after_episode(epoch=epoch, episode_reward=latest_episode_reward, episode_length=latest_episode_length)
+            should_exit, exit_reason = exit_monitor.should_exit(latest_episode_reward, latest_episode_length)
+            if exit_monitor.episode_count % verbose_freq == 0:
+                assert len(rolling_episode_rewards) == len(rolling_episode_lengths)
+                if len(rolling_episode_lengths) > 0:
+                    avg_episode_reward = np.nanmean(rolling_episode_rewards)
+                    avg_episode_length = np.nanmean(rolling_episode_lengths)
+                    avg_episode_perstep_reward = np.sum(rolling_episode_rewards) / np.sum(rolling_episode_lengths)
+                else:
+                    avg_episode_reward = np.nan
+                    avg_episode_length = np.nan
+                    avg_episode_perstep_reward = np.nan
+                self.logger.info(
+                    f"Episode {exit_monitor.episode_count}/{max_epochs}: "
+                    f"{tr('average_episode_reward')}: {avg_episode_reward}, "
+                    f"{tr('average_episode_length')}: {avg_episode_length}, "
+                    f"{tr('average_perstep_reward')}: {avg_episode_perstep_reward}"
+                )
 
             if should_exit:
                 self.logger.info(f"{tr('exit_reason')}: {tr(exit_reason)}")

@@ -10,6 +10,10 @@ from cfgdict import make_config #, Schema
 from gymnasium.vector import VectorEnv
 from ....logger import user_logger
 from ....utils.cuda import get_device
+from ...env_player import BaseVecEnvPlayer
+
+def is_vec_env(env):
+    return isinstance(env, (VectorEnv, BaseVecEnvPlayer))
 
 class BaseAgent(ABC):
     schema = None
@@ -38,7 +42,7 @@ class BaseAgent(ABC):
         self.env = env
         self.seed_all(self.seed)
         if self.env is not None:
-            self.is_vec_env = isinstance(self.env, VectorEnv)
+            self.is_vec_env = is_vec_env(self.env)
             if self.is_vec_env:
                 self.state_space = self.env.single_observation_space
                 self.action_space = self.env.single_action_space

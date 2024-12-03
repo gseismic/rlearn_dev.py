@@ -14,6 +14,8 @@ pip install -e .
 - naive: Naive version, raw implementation with raw or minor optimizations, could be used for benchmarking
 - main: Stable version, ready for production, with more docs and tests
 
+## Features
+
 ## showcase
 ### MuJoco-ant-v5
 使用`rlearn_dev`的naive版本SAC训练mujoco Ant-v5，含主动添加的噪音下，训练得分6000+
@@ -127,6 +129,7 @@ if __name__ == '__main__':
 - [ ] support multi-agent
 - [ ] support gymnasium-v1
 - [ ] support distributed training
+- [ ] parallel DataCollector
 
 ## 可能遇到的问题 Frequently Asked Questions
 ### 无法录制视频 Unable to record videos

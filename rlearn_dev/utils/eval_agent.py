@@ -24,22 +24,25 @@ def eval_agent_performance(agent,
     for episode in range(num_episodes):
         state, _ = env.reset()
         episode_reward = 0
+        episode_length = 0
         for step in range(max_steps):
             action, _ = agent.predict(state, deterministic=deterministic)
             # print('action', action, type(action))
             next_state, reward, done, truncated, _ = env.step(action)
             episode_reward += reward
+            episode_length += 1
             state = next_state
             if done or truncated:
                 break
         
         total_rewards.append(episode_reward)
-        episode_lengths.append(step + 1)
+        episode_lengths.append(episode_length)
     
     end_time = time.time()
     test_duration = end_time - start_time
     
     # 计算统计信息
+    perstep_reward = np.sum(total_rewards) / np.sum(episode_lengths)
     avg_reward = np.mean(total_rewards)
     std_reward = np.std(total_rewards)
     max_reward = np.max(total_rewards)
@@ -53,10 +56,10 @@ def eval_agent_performance(agent,
     # success_threshold = env.spec.reward_threshold if hasattr(env.spec, 'reward_threshold') else avg_reward
     # print(f'{total_rewards[0], success_threshold=}')
     # success_rate = sum(r >= success_threshold for r in total_rewards) / num_episodes
-    
     info = {
         'rewards': total_rewards,
         'average_reward': avg_reward,
+        'perstep_reward': perstep_reward,
         'median_reward': median_reward,
         'reward_std': std_reward,
         'max_reward': max_reward,

@@ -23,7 +23,7 @@ class ExitMonitor:
         self.best_avg_reward = float('-inf')
         self.episodes_without_improvement = 0
 
-    def should_exit(self, episode_reward):
+    def should_exit(self, episode_reward, episode_length=None):
         self.episode_count += 1
         self.recent_rewards.append(episode_reward)
         self.total_steps += 1

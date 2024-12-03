@@ -2,6 +2,10 @@ import numpy as np
 from copy import deepcopy
 from .base import BaseVecEnvPlayer
 
+
+def make_vec_env_player(env_fn, num_envs):
+    return SyncVecEnvPlayer([env_fn for _ in range(num_envs)])
+
 # Gymnasium-like SyncVecEnvPlayer
 class SyncVecEnvPlayer(BaseVecEnvPlayer):
     """

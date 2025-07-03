@@ -28,10 +28,10 @@ class TD3Agent(OnlineAgent):
         policy_frequency=Field(type='int', default=2, ge=0),
         tau=Field(type='float', default=0.005, ge=0, le=1),
         exploration_noise=Field(type='float', default=0.1, ge=0, le=1),
-        policy_noise=Field(type='float', default=0.2, ge=0, le=1), # new compared to naive.DDPG
-        noise_clip=Field(type='float', default=0.5, ge=0, le=1), # new compared to naive.DDPG
-        policy_grad_norm_clip=Field(type='float', default=1.0, ge=0),
-        critic_grad_norm_clip=Field(type='float', default=1.0, ge=0),
+        policy_noise=Field(type='float', default=0.2, ge=0, le=1), # new compared to naive.DDPG 
+        noise_clip=Field(type='float', default=0.5, ge=0, le=1), # new compared to naive.DDPG 
+        policy_grad_norm_clip=Field(type='float', default=1.0, ge=0), 
+        critic_grad_norm_clip=Field(type='float', default=1.0, ge=0), 
     )
         
     def initialize(self):
@@ -103,14 +103,14 @@ class TD3Agent(OnlineAgent):
         batch = self.replay_buffer.sample(batch_size, copy=True)
         batch_size = batch.states.shape[0] # if buffer not full, batch_size < batch_size
         # batch.states: (batch_size, *state_shape)
-        states = batch.states
-        actions = batch.actions
-        rewards = batch.rewards
-        next_states = batch.next_states
-        dones = batch.dones
+        states = batch.states 
+        actions = batch.actions 
+        rewards = batch.rewards 
+        next_states = batch.next_states 
+        dones = batch.dones 
 
         # compute target q value
-        with torch.no_grad():
+        with torch.no_grad(): 
             vectorized_action_space_low = torch.tensor(np.array([self.action_space.low]*batch_size), device=self.device)
             vectorized_action_space_high = torch.tensor(np.array([self.action_space.high]*batch_size), device=self.device)
             assert vectorized_action_space_high.shape[0] == batch_size

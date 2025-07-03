@@ -59,7 +59,7 @@ class PPOAgent(OnlineAgentVE):
             self.actor_critic = ActorCriticContinous(self.state_dim, 
                                                      self.single_action_space.shape,
                                                      rpo_alpha=self.rpo_alpha).to(self.device)
-        else:
+        else: 
             self.logger.info(f'Use discrete action space: {self.single_action_space=}')
             self.actor_critic = ActorCriticDiscrete(self.state_dim, self.single_action_space.n).to(self.device)
         self.optimizer = optim.Adam(self.actor_critic.parameters(), lr=self.learning_rate, eps=self.optimizer_eps)
@@ -123,18 +123,18 @@ class PPOAgent(OnlineAgentVE):
         if isinstance(self.single_action_space, gym.spaces.Box):
             assert len(self.single_action_space.shape) == 1
             # print(f'{self.single_action_space.shape=}, {logprob.shape=}')
-            # print(f'{action.shape=}, {(self.num_envs, self.single_action_space.shape[0])=}')
-            assert action.shape == (self.num_envs, self.single_action_space.shape[0])
-            assert logprob.shape == (self.num_envs,)
-            # assert action.shape == (self.num_envs, )
-            # assert logprob.shape == (self.num_envs, )
-        else:
-            assert action.shape == (self.num_envs, )
-            assert logprob.shape == (self.num_envs, )
-        self.actions[epoch_step] = action
-        self.log_probs[epoch_step] = logprob
+            # print(f'{action.shape=}, {(self.num_envs, self.single_action_space.shape[0])=}') 
+            assert action.shape == (self.num_envs, self.single_action_space.shape[0]) 
+            assert logprob.shape == (self.num_envs,) 
+            # assert action.shape == (self.num_envs, ) 
+            # assert logprob.shape == (self.num_envs, ) 
+        else: 
+            assert action.shape == (self.num_envs, ) 
+            assert logprob.shape == (self.num_envs, ) 
+        self.actions[epoch_step] = action 
+        self.log_probs[epoch_step] = logprob 
         
-        return action.cpu().numpy()
+        return action.cpu().numpy() 
     
     def step(self, next_state, rewards, terminates, 
              truncates, infos, epoch, epoch_step):
@@ -214,12 +214,12 @@ class PPOAgent(OnlineAgentVE):
             assert self.minibatch_size > 1
             clipfrac = None
             # 因为数据高度复用了
-            # 增加内部循环，因为local_minibatch_size变大了，循环次数为：self.batch_size/self.minibatch_size
-            if 0:
-                local_minibatch_size = min(int(self.minibatch_size*1.005**epoch), self.batch_size)
-                _std_num_loops = int(self.batch_size/self.minibatch_size)
-                _current_num_loops = int(self.batch_size/local_minibatch_size)
-                recommended_num_loops = int(_std_num_loops/_current_num_loops)
+            # 增加内部循环，因为local_minibatch_size变大了，循环次数为：self.batch_size/self.minibatch_size 
+            if 0: 
+                local_minibatch_size = min(int(self.minibatch_size*1.005**epoch), self.batch_size) 
+                _std_num_loops = int(self.batch_size/self.minibatch_size) 
+                _current_num_loops = int(self.batch_size/local_minibatch_size) 
+                recommended_num_loops = int(_std_num_loops/_current_num_loops) 
                 # print(f'**{recommended_num_loops=}, {_std_num_loops=}, {_current_num_loops=}')   
             else:
                 local_minibatch_size = self.minibatch_size
@@ -235,20 +235,20 @@ class PPOAgent(OnlineAgentVE):
                     mini_batch_indices = batch_indices[start:end] 
                     # 因为有update_epochs随机复用数据，丢弃部分数据是可行的
                     # 防止数据太少导致误差
-                    if len(mini_batch_indices) != local_minibatch_size:
+                    if len(mini_batch_indices) != local_minibatch_size: 
                         continue
 
                     # NOTE: 因为是mini-batch, 所有计算很快
-                    if isinstance(self.single_action_space, gym.spaces.Box):
+                    if isinstance(self.single_action_space, gym.spaces.Box): 
                         _, newlogprob, entropy, new_value = self.actor_critic.get_action_and_value(batch_states[mini_batch_indices], batch_actions[mini_batch_indices])
-                    else:
+                    else: 
                         _, newlogprob, entropy, new_value = self.actor_critic.get_action_and_value(batch_states[mini_batch_indices], batch_actions.long()[mini_batch_indices])
-                    logratio = newlogprob - batch_log_probs[mini_batch_indices]
-                    ratio = logratio.exp()
-                    with torch.no_grad():
+                    logratio = newlogprob - batch_log_probs[mini_batch_indices] 
+                    ratio = logratio.exp() 
+                    with torch.no_grad(): 
                         # according `http://joschu.net/blog/kl-approx.html`, we can approximate kl for better stability
-                        # TODO: move to loc of target_kl
-                        # old_approx_kl = (-logratio).mean()
+                        # TODO: move to loc of target_kl 
+                        # old_approx_kl = (-logratio).mean() 
                         # 被认为更稳定
                         approx_kl = ((ratio - 1) - logratio).mean()
                         approx_kls += [approx_kl]
@@ -258,7 +258,7 @@ class PPOAgent(OnlineAgentVE):
                     # XXX TODO: 这里减去的是minibatch的平均值, 可以考虑减去整个steps_per_epoch*num_envs的平均值
                     #           或其他自定义长度的平均值
                     # XXX: 这里打乱了顺序，导致非因果，时序非平稳数据，比如金融数据，或应该保存原始序列，减去running_mean更为合适
-                    #      TODO: 将来校验
+                    #      TODO: 将来校验 
                     
                     # ** normalize mbatch_advantages **
                     mbatch_advantages = batch_advantages[mini_batch_indices]
@@ -275,11 +275,11 @@ class PPOAgent(OnlineAgentVE):
                     # 策略相似的地方，价值大部分地方可能也相似，差别过大的, 
                     # 因为v是估计当前策略，非最优策略，不必要求太准 
                     new_value = new_value.view(-1)
-                    if self.clip_vloss:
-                        # XXX: the code NOT good
-                        v_loss_unclipped = (new_value - batch_returns[mini_batch_indices]) ** 2
-                        v_clipped = batch_values[mini_batch_indices] + torch.clamp(
-                            new_value - batch_values[mini_batch_indices],
+                    if self.clip_vloss: 
+                        # XXX: the code NOT good 
+                        v_loss_unclipped = (new_value - batch_returns[mini_batch_indices]) ** 2 
+                        v_clipped = batch_values[mini_batch_indices] + torch.clamp( 
+                            new_value - batch_values[mini_batch_indices], 
                             -self.clip_coef_v,
                             self.clip_coef_v,
                         )
@@ -320,7 +320,7 @@ class PPOAgent(OnlineAgentVE):
                     break
                 
                 if self.v_clipfrac_stop is not None and len(v_clipfracs) > 3 and np.mean(v_clipfracs[-3:]) >= self.clipfrac_stop:
-                    self.logger.debug(f"Early stopping at step {epoch} due to Value clipping: {v_clipfrac}")
+                    self.logger.debug(f"Early stopping at step {epoch} due to Value clipping: {v_clipfrac}") 
                     exit_this_train = True
                     break
                 
@@ -329,17 +329,17 @@ class PPOAgent(OnlineAgentVE):
                     exit_this_train = True
                     break
                 
-                if self.target_kl is not None and approx_kl > self.target_kl:
+                if self.target_kl is not None and approx_kl > self.target_kl: 
                     self.logger.info(f"Early stopping Program at step {epoch} due to reaching max kl: {approx_kl}")
-                    exit_this_train = True
-                    should_exit_program = True
-                    break
+                    exit_this_train = True 
+                    should_exit_program = True 
+                    break 
                 
         self.restore_lr()
-        pred_returns, true_returns = batch_values.cpu().numpy(), batch_returns.cpu().numpy()
-        var_true_returns = np.var(true_returns)
-        if var_true_returns == 0:
-            v_explained_var = np.nan
+        pred_returns, true_returns = batch_values.cpu().numpy(), batch_returns.cpu().numpy() 
+        var_true_returns = np.var(true_returns) 
+        if var_true_returns == 0: 
+            v_explained_var = np.nan 
         else:
             v_explained_var = np.var(true_returns - pred_returns) / var_true_returns
 

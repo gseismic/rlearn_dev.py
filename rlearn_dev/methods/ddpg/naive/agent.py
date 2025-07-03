@@ -115,10 +115,10 @@ class DDPGAgent(OnlineAgent):
             (global_step_idx >= self.policy_learning_starts)
             and ((global_step_idx + 1 - self.policy_learning_starts) % self.policy_frequency == 0)
         ):
-            if not self._policy_training_started:
-                self._policy_training_started = True
-                self.logger.info('Policy-network training started')
-            actor_loss = - self.critic(states, self.actor(states)).mean()
+            if not self._policy_training_started: 
+                self._policy_training_started = True 
+                self.logger.info('Policy-network training started') 
+            actor_loss = - self.critic(states, self.actor(states)).mean() 
             self.actor_optimizer.zero_grad()
             actor_loss.backward()
             if self.policy_grad_norm_clip is not None:
@@ -127,6 +127,7 @@ class DDPGAgent(OnlineAgent):
             self._update_target_networks()
     
     def _update_target_networks(self, tau=None):
+        # polyak update: target_params = (1 - tau) * target_params + tau * params
         tau = self.tau if tau is None else tau
         polyak_update(self.actor.parameters(), self.target_actor.parameters(), tau)
         polyak_update(self.critic.parameters(), self.target_critic.parameters(), tau)
@@ -140,9 +141,9 @@ class DDPGAgent(OnlineAgent):
 
     def model_dict(self):
         return {
-            'config': self.config.to_dict(),
-            'actor': self.actor.state_dict(),
-            'critic': self.critic.state_dict(),
+            'config': self.config.to_dict(), 
+            'actor': self.actor.state_dict(), 
+            'critic': self.critic.state_dict(), 
         }
         
     def predict(self, state, deterministic=None):

@@ -4,6 +4,7 @@ import numpy as np
 from torch.distributions import Normal
 from .utils import layer_init
 
+# https://iclr-blog-track.github.io/2022/03/25/ppo-implementation-details/ 
 class ActorCritic(nn.Module):
     def __init__(self, state_dim, action_dim, rpo_alpha=0.0):
         super().__init__()

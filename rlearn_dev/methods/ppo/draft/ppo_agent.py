@@ -10,7 +10,7 @@ from .network.continous import ActorCritic as ActorCriticContinous
 
 # ref: https://github.com/vwxyzjn/cleanrl/blob/master/cleanrl/ppo.py
 class PPOAgent(OnlineAgentVE):
-    """draft but work
+    """draft but work 
     """
     def __init__(self, env, config, logger=None, seed=None, **kwargs):
         super().__init__(env, config, logger=logger, seed=seed, **kwargs)

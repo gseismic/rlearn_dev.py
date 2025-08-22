@@ -34,7 +34,7 @@ def make_env(env_id, idx, capture_video, run_name, gamma):
         # env = gym.wrappers.RecordEpisodeStatistics(env)
         # env = gym.wrappers.ClipAction(env) # np.clip(action, self.action_space.low, self.action_space.high)
         # env = gym.wrappers.NormalizeObservation(env)
-        # env = gym.wrappers.TransformObservation(env, lambda obs: np.clip(obs, -10, 10))
+        # env = gym.wrappers.TransformObservation(env, lambda obs: np.clip(obs, -10, 10), env.observation_space)
         # env = gym.wrappers.NormalizeReward(env, gamma=gamma)
         # env = gym.wrappers.TransformReward(env, lambda reward: np.clip(reward, -10, 10))
         return env
@@ -45,7 +45,7 @@ def test_ppo_draft_continous():
     # env setup
     num_envs = 10
     # env_id = 'CliffWalking-v0'
-    env_id = 'Pendulum-v1'
+    env_id = 'Hopper-v4' # 'Pendulum-v1'
     # env_id = 'HalfCheetah-v4'
     capture_video = False
     run_name = "main"
@@ -67,18 +67,18 @@ def test_ppo_draft_continous():
         'gamma': gamma,
         'gae_lambda': gae_lambda,
         'rpo_alpha': 0.5, # 
-        'ent_coef': 0.0, # XXX zero
+        'ent_coef': 0.1, # XXX zero
         'clip_coef': 0.2,
         'vf_coef': 0.5,
-        'clip_vloss': True,
+        'clip_vloss': False, # XXX
         'clip_coef_v': 0.2, # clip
         'update_epochs': 10, # 200
         'num_minibatches': 32, # minibatch_size: batch_size/num_minibatches
     }
-    max_epochs = 50
+    max_epochs = 500
     # 小步迭代: num_envs * steps_per_epoch
     # too small steps_per_epoch will make value not stable
-    steps_per_epoch = 2048
+    steps_per_epoch = 200 # 2048
 
     agent = PPOAgent(envs, config=config, seed=g_seed)
     info = agent.learn(max_epochs, 

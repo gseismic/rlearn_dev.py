@@ -7,8 +7,8 @@ from .utils import layer_init
 class ActorCritic(nn.Module):
     def __init__(self, state_dim, action_space, rpo_alpha=0.0, scale_action=True):
         """
-        Args:
-            scale_action (bool): 是否裁剪动作
+        Args: 
+            scale_action (bool): 是否裁剪动作 
         """
         super().__init__()
         self.state_dim = state_dim if state_dim else (1,)

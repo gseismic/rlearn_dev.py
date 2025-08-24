@@ -1,3 +1,3 @@
-from .ppo_agent import PPOAgent
+from .agent import PPOAgent
 
 __all__ = ['PPOAgent']

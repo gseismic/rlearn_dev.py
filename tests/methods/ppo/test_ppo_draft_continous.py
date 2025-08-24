@@ -45,7 +45,8 @@ def test_ppo_draft_continous():
     # env setup
     num_envs = 10
     # env_id = 'CliffWalking-v0'
-    env_id = 'Hopper-v4' # 'Pendulum-v1'
+    # env_id = 'Hopper-v4' # 'Pendulum-v1'
+    env_id = 'Pendulum-v1'
     # env_id = 'HalfCheetah-v4'
     capture_video = False
     run_name = "main"

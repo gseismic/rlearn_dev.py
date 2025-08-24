@@ -15,9 +15,9 @@ class Actor(nn.Module):
     def forward(self, observations, actions=None):
         policy = self.compute_distribution(observations)
         log_prob = None
-        if actions is not None:
+        if actions is not None: 
             log_prob = self.compute_log_probability(policy, actions)
-        return policy, log_prob
+        return policy, log_prob 
 
 class MLPCategoricalActor(Actor):
     def __init__(self, observation_dim, action_dim, hidden_layer_sizes, activation):

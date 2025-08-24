@@ -12,19 +12,19 @@ from .network.continous import ActorCritic as ActorCriticContinous
 class PPOAgent(OnlineAgentVE):
     """draft but work 
     """
-    def __init__(self, env, config, logger=None, seed=None, **kwargs):
-        super().__init__(env, config, logger=logger, seed=seed, **kwargs)
+    def __init__(self, env, config, logger=None, seed=None, **kwargs): 
+        super().__init__(env, config, logger=logger, seed=seed, **kwargs) 
         
-    def initialize(self, *args, **kwargs):
-        self.num_envs = self.env.num_envs
-        self.single_observation_space = self.env.single_observation_space
-        self.single_action_space = self.env.single_action_space
-        if len(self.single_observation_space.shape) == 0:
+    def initialize(self, *args, **kwargs): 
+        self.num_envs = self.env.num_envs 
+        self.single_observation_space = self.env.single_observation_space 
+        self.single_action_space = self.env.single_action_space 
+        if len(self.single_observation_space.shape) == 0: 
             self.state_dim = (1,)
         else:
             self.state_dim = self.single_observation_space.shape
-        # algo
-        self.learning_rate = self.config.get('learning_rate', 2.5e-4)
+        # algo 
+        self.learning_rate = self.config.get('learning_rate', 2.5e-4) 
         self.anneal_lr = self.config.get('anneal_lr', True) 
         self.gamma = self.config.get('gamma', 0.99)
         self.gae_lambda = self.config.get('gae_lambda', 0.95) 

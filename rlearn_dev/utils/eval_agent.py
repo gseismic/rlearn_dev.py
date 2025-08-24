@@ -21,18 +21,18 @@ def eval_agent_performance(agent,
     episode_lengths = []
     start_time = time.time()
     
-    for episode in range(num_episodes):
-        state, _ = env.reset()
-        episode_reward = 0
-        episode_length = 0
-        for step in range(max_steps):
-            action, _ = agent.predict(state, deterministic=deterministic)
+    for episode in range(num_episodes): 
+        state, _ = env.reset() 
+        episode_reward = 0 
+        episode_length = 0 
+        for step in range(max_steps): 
+            action, _ = agent.predict(state, deterministic=deterministic) 
             # print(action)
-            next_state, reward, done, truncated, _ = env.step(action)
-            episode_reward += reward
-            episode_length += 1
-            state = next_state
-            if done or truncated:
+            next_state, reward, done, truncated, _ = env.step(action) 
+            episode_reward += reward 
+            episode_length += 1 
+            state = next_state 
+            if done or truncated: 
                 break
         
         total_rewards.append(episode_reward)

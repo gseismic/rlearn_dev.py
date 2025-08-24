@@ -68,8 +68,8 @@ class PPOAgent(OnlineAgentVE):
         # self.critic = get_critic_model(env, model_type='MLPCritic').to(self.device)
         # self.optimizer = optim.Adam(list(self.actor.parameters()) + list(self.critic.parameters()), lr=config.learning_rate)
     
-    def before_learn(self, states, infos, **kwargs):
-        num_envs = self.num_envs
+    def before_learn(self, states, infos, **kwargs): 
+        num_envs = self.num_envs 
         steps_per_epoch = self.steps_per_epoch
         # batch_size: 单个epoch，所有env的step步数steps_per_epoch
         self.batch_size = int(self.num_envs * steps_per_epoch)
@@ -82,14 +82,14 @@ class PPOAgent(OnlineAgentVE):
         self.dones = torch.zeros((steps_per_epoch, num_envs)).to(self.device)
         self.values = torch.zeros((steps_per_epoch, num_envs)).to(self.device)
         
-        # variables for single step
+        # variables for single step 
         self.next_state = torch.Tensor(states).to(self.device) # (num_envs, *obs_shape)
         self.next_done = torch.zeros(self.num_envs).to(self.device)
 
-        self.logger.debug(f'reset: demo states: {states}')
-        self.logger.debug(f'reset: demo infos: {infos}')
+        self.logger.debug(f'reset: demo states: {states}') 
+        self.logger.debug(f'reset: demo infos: {infos}') 
     
-    def before_episode(self, epoch, **kwargs):
+    def before_episode(self, epoch, **kwargs): 
         if self.anneal_lr:
             frac = 1.0 - epoch / self.max_epochs
             lrnow = frac * self.learning_rate
@@ -112,7 +112,7 @@ class PPOAgent(OnlineAgentVE):
         # assert np.allclose(self.next_state.cpu().numpy(), state)
 
         with torch.no_grad():
-            # action: (num_envs, action_dim)
+            # action: (num_envs, action_dim) 
             action, logprob, _, value = self.actor_critic.get_action_and_value(self.next_state, compute_entropy=False)
             # value: (num_envs, 1)
             assert value.shape == (self.num_envs, 1)

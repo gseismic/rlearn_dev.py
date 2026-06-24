@@ -9,6 +9,7 @@ videos/
 backup/
 logs/
 labs/grpo/runs/
+legacy_review/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

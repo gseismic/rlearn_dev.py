@@ -16,7 +16,14 @@ class ActorCritic(nn.Module):
         self.action_space = action_space
         self.rpo_alpha = rpo_alpha
 
-        if self.action_space.high is not None and self.action_space.low is not None:
+        has_bounded_action_space = (
+            self.action_space.high is not None
+            and self.action_space.low is not None
+            and np.all(np.isfinite(self.action_space.high))
+            and np.all(np.isfinite(self.action_space.low))
+        )
+
+        if has_bounded_action_space:
             self.action_low = torch.tensor(self.action_space.low, dtype=torch.float32)
             self.action_high = torch.tensor(self.action_space.high, dtype=torch.float32)
             self.scale_action = scale_action

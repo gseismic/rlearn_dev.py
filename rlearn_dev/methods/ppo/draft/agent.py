@@ -251,7 +251,8 @@ class PPOAgent(OnlineAgentVE):
                         # old_approx_kl = (-logratio).mean() 
                         # 被认为更稳定
                         approx_kl = ((ratio - 1) - logratio).mean()
-                        approx_kls += [approx_kl]
+                        approx_kl_value = approx_kl.detach().cpu().item()
+                        approx_kls += [approx_kl_value]
                         clipfrac = ((ratio - 1.0).abs() > self.clip_coef).float().mean().item()
                         clipfracs += [clipfrac]
                     
@@ -324,13 +325,13 @@ class PPOAgent(OnlineAgentVE):
                     exit_this_train = True
                     break
                 
-                if self.kl_stop is not None and approx_kl > self.kl_stop:
-                    self.logger.debug(f"Early stopping at step {epoch} due to reaching max kl: {approx_kl}")
+                if self.kl_stop is not None and approx_kl_value > self.kl_stop:
+                    self.logger.debug(f"Early stopping at step {epoch} due to reaching max kl: {approx_kl_value}")
                     exit_this_train = True
                     break
                 
-                if self.target_kl is not None and approx_kl > self.target_kl: 
-                    self.logger.info(f"Early stopping Program at step {epoch} due to reaching max kl: {approx_kl}")
+                if self.target_kl is not None and approx_kl_value > self.target_kl:
+                    self.logger.info(f"Early stopping Program at step {epoch} due to reaching max kl: {approx_kl_value}")
                     exit_this_train = True 
                     should_exit_program = True 
                     break 
@@ -409,4 +410,3 @@ class PPOAgent(OnlineAgentVE):
         self.initialize()
         self.actor_critic.load_state_dict(model_dict['actor_critic'])
         self.optimizer.load_state_dict(model_dict['optimizer'])
-    

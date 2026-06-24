@@ -1,5 +1,7 @@
 # PLAN-002 PPO 算法集中审核结果
 
+> 后续调整：PLAN-003 已将本结果中的共享 `_utils.py` 方案改为 `naive`、`draft` 各自自包含实现。本文件保留 PLAN-002 当时的审核记录。
+
 ## 已处理问题
 
 1. `naive` PPO 的 KL early stop 混用 tensor 和 Python 数值

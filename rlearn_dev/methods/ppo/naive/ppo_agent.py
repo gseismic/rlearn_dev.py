@@ -6,7 +6,26 @@ import gymnasium as gym
 from ....core.agent.main.online_agent_ve import OnlineAgentVE
 from .network.discrete import ActorCritic as ActorCriticDiscrete
 from .network.continous import ActorCritic as ActorCriticContinous
-from .._utils import explained_variance, recent_mean_reaches_threshold
+
+
+def _explained_variance(predictions, targets):
+    """解释价值函数拟合程度，教学版保留公式而不抽到共享工具。"""
+    targets_variance = np.var(targets)
+    if targets_variance == 0:
+        return np.nan
+    # 标准 explained variance = 1 - Var(y - y_hat) / Var(y)。
+    # 旧代码少了前面的 1 -，会把“误差占比”误报成“解释程度”。
+    return 1 - np.var(targets - predictions) / targets_variance
+
+
+def _recent_mean_reaches_threshold(values, threshold, window=3, min_count=4):
+    """最近若干个 clipping 比例超过阈值时提前停止当前 PPO update。"""
+    if threshold is None or len(values) < min_count:
+        return False
+    # 这里使用最近 window 个 minibatch，而不是整个 epoch 均值；
+    # 这样保留原实现“连续几次异常才停止”的意图。
+    return float(np.mean(values[-window:])) >= threshold
+
 
 class PPOAgent(OnlineAgentVE):
 
@@ -249,6 +268,8 @@ class PPOAgent(OnlineAgentVE):
                     with torch.no_grad():
                         # `http://joschu.net/blog/kl-approx.html`
                         approx_kl = ((ratio - 1) - logratio).mean()
+                        # 教学点：训练日志和 early stop 使用 Python 数值即可。
+                        # 如果把 tensor 放进列表再交给 numpy，会混入设备和 autograd 语义。
                         approx_kl_value = approx_kl.detach().cpu().item()
                         approx_kls += [approx_kl_value]
                         clipfrac = ((ratio - 1.0).abs() > self.clip_coef).float().mean().item()
@@ -313,12 +334,14 @@ class PPOAgent(OnlineAgentVE):
                         f" kl:{kl_loss.cpu().item():<7.5f} v:{v_loss.cpu().item():<8.3f}"
                     )
                     # self._debug_test()
-                if recent_mean_reaches_threshold(clipfracs, self.clipfrac_stop):
+                if _recent_mean_reaches_threshold(clipfracs, self.clipfrac_stop):
                     self.logger.debug(f"Early stopping at step {epoch} due to clipping: {clipfrac}")
                     exit_this_train = True
                     break
                 
-                if recent_mean_reaches_threshold(v_clipfracs, self.v_clipfrac_stop):
+                # value clipping 和 policy clipping 是两个不同指标。
+                # 这里必须使用 v_clipfrac_stop，不能误用 clipfrac_stop。
+                if _recent_mean_reaches_threshold(v_clipfracs, self.v_clipfrac_stop):
                     self.logger.debug(f"Early stopping at step {epoch} due to Value clipping: {v_clipfrac}")
                     exit_this_train = True
                     break
@@ -336,7 +359,7 @@ class PPOAgent(OnlineAgentVE):
                 
         self.restore_lr()
         pred_returns, true_returns = batch_values.cpu().numpy(), batch_returns.cpu().numpy()
-        v_explained_var = explained_variance(pred_returns, true_returns)
+        v_explained_var = _explained_variance(pred_returns, true_returns)
 
         episode_info = {
             'loss': loss.item(),

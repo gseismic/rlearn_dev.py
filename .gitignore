@@ -1,4 +1,5 @@
 drafts/
+packages/
 checkpoints/
 final_model/
 final_models/
@@ -7,6 +8,7 @@ videos/
 *.zip
 backup/
 logs/
+labs/grpo/runs/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -23,7 +23,7 @@ def make_env(env_id, idx, capture_video, run_name):
 
 def test_ppo_naive_env2():
     # env setup
-    num_envs = 5
+    num_envs = 5 
     # env_id = 'CliffWalking-v0'
     env_id = 'CartPole-v1'
     capture_video = False

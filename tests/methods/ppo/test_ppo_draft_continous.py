@@ -46,11 +46,15 @@ def test_ppo_draft_continous():
     num_envs = 10
     # env_id = 'CliffWalking-v0'
     # env_id = 'Hopper-v4' # 'Pendulum-v1'
-    env_id = 'Pendulum-v1'
-    # env_id = 'HalfCheetah-v4'
+    # env_id = 'Pendulum-v1'
+    env_id = 'HalfCheetah-v4' 
     capture_video = False
     run_name = "main"
     gamma = 0.99
+
+    _env = gym.make(env_id)
+    print(_env.spec.max_episode_steps)  # 应该输出 1000
+    # raise 
 
     envs = gym.vector.SyncVectorEnv(
         [make_env(env_id, i, capture_video, run_name, gamma) for i in range(num_envs)],
@@ -79,7 +83,7 @@ def test_ppo_draft_continous():
     max_epochs = 500
     # 小步迭代: num_envs * steps_per_epoch
     # too small steps_per_epoch will make value not stable
-    steps_per_epoch = 200 # 2048
+    steps_per_epoch = 1000 # 200 # 2048
 
     agent = PPOAgent(envs, config=config, seed=g_seed)
     info = agent.learn(max_epochs, 

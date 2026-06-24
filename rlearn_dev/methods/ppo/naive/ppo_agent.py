@@ -6,6 +6,7 @@ import gymnasium as gym
 from ....core.agent.main.online_agent_ve import OnlineAgentVE
 from .network.discrete import ActorCritic as ActorCriticDiscrete
 from .network.continous import ActorCritic as ActorCriticContinous
+from .._utils import explained_variance, recent_mean_reaches_threshold
 
 class PPOAgent(OnlineAgentVE):
 
@@ -210,6 +211,7 @@ class PPOAgent(OnlineAgentVE):
             
             approx_kls = []
             approx_kl = None
+            approx_kl_value = None
             assert self.minibatch_size > 1
             clipfrac = None
             # 因为数据高度复用了
@@ -247,7 +249,8 @@ class PPOAgent(OnlineAgentVE):
                     with torch.no_grad():
                         # `http://joschu.net/blog/kl-approx.html`
                         approx_kl = ((ratio - 1) - logratio).mean()
-                        approx_kls += [approx_kl.cpu().item()]
+                        approx_kl_value = approx_kl.detach().cpu().item()
+                        approx_kls += [approx_kl_value]
                         clipfrac = ((ratio - 1.0).abs() > self.clip_coef).float().mean().item()
                         clipfracs += [clipfrac]
                     
@@ -310,34 +313,30 @@ class PPOAgent(OnlineAgentVE):
                         f" kl:{kl_loss.cpu().item():<7.5f} v:{v_loss.cpu().item():<8.3f}"
                     )
                     # self._debug_test()
-                if self.clipfrac_stop is not None and len(clipfracs) > 3 and np.mean(clipfracs[-3:]) >= self.clipfrac_stop:
+                if recent_mean_reaches_threshold(clipfracs, self.clipfrac_stop):
                     self.logger.debug(f"Early stopping at step {epoch} due to clipping: {clipfrac}")
                     exit_this_train = True
                     break
                 
-                if self.v_clipfrac_stop is not None and len(v_clipfracs) > 3 and np.mean(v_clipfracs[-3:]) >= self.clipfrac_stop:
+                if recent_mean_reaches_threshold(v_clipfracs, self.v_clipfrac_stop):
                     self.logger.debug(f"Early stopping at step {epoch} due to Value clipping: {v_clipfrac}")
                     exit_this_train = True
                     break
                 
-                if self.kl_stop is not None and approx_kl > self.kl_stop:
-                    self.logger.debug(f"Early stopping at step {epoch} due to reaching max kl: {approx_kl.detach().cpu().item()}")
+                if self.kl_stop is not None and approx_kl_value > self.kl_stop:
+                    self.logger.debug(f"Early stopping at step {epoch} due to reaching max kl: {approx_kl_value}")
                     exit_this_train = True
                     break
                 
-                if self.target_kl is not None and approx_kl > self.target_kl:
-                    self.logger.info(f"Early stopping Program at step {epoch} due to reaching max kl: {approx_kl.detach().cpu().item()}")
+                if self.target_kl is not None and approx_kl_value > self.target_kl:
+                    self.logger.info(f"Early stopping Program at step {epoch} due to reaching max kl: {approx_kl_value}")
                     exit_this_train = True
                     should_exit_program = True
                     break
                 
         self.restore_lr()
         pred_returns, true_returns = batch_values.cpu().numpy(), batch_returns.cpu().numpy()
-        var_true_returns = np.var(true_returns)
-        if var_true_returns == 0:
-            v_explained_var = np.nan
-        else:
-            v_explained_var = np.var(true_returns - pred_returns) / var_true_returns
+        v_explained_var = explained_variance(pred_returns, true_returns)
 
         episode_info = {
             'loss': loss.item(),

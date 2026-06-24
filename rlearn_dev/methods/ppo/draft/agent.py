@@ -7,6 +7,7 @@ import gymnasium as gym
 from ....core.agent.main.online_agent_ve import OnlineAgentVE
 from .network.discrete import ActorCritic as ActorCriticDiscrete
 from .network.continous import ActorCritic as ActorCriticContinous
+from .._utils import explained_variance, recent_mean_reaches_threshold
 
 # ref: https://github.com/vwxyzjn/cleanrl/blob/master/cleanrl/ppo.py
 class PPOAgent(OnlineAgentVE):
@@ -315,12 +316,12 @@ class PPOAgent(OnlineAgentVE):
                         f" kl:{kl_loss.item():<7.5f} v:{v_loss.item():<8.3f}"
                     )
                     # self._debug_test()
-                if self.clipfrac_stop is not None and len(clipfracs) > 3 and np.mean(clipfracs[-3:]) >= self.clipfrac_stop:
+                if recent_mean_reaches_threshold(clipfracs, self.clipfrac_stop):
                     self.logger.debug(f"Early stopping at step {epoch} due to clipping: {clipfrac}")
                     exit_this_train = True
                     break
                 
-                if self.v_clipfrac_stop is not None and len(v_clipfracs) > 3 and np.mean(v_clipfracs[-3:]) >= self.clipfrac_stop:
+                if recent_mean_reaches_threshold(v_clipfracs, self.v_clipfrac_stop):
                     self.logger.debug(f"Early stopping at step {epoch} due to Value clipping: {v_clipfrac}") 
                     exit_this_train = True
                     break
@@ -338,11 +339,7 @@ class PPOAgent(OnlineAgentVE):
                 
         self.restore_lr()
         pred_returns, true_returns = batch_values.cpu().numpy(), batch_returns.cpu().numpy() 
-        var_true_returns = np.var(true_returns) 
-        if var_true_returns == 0: 
-            v_explained_var = np.nan 
-        else:
-            v_explained_var = np.var(true_returns - pred_returns) / var_true_returns
+        v_explained_var = explained_variance(pred_returns, true_returns)
 
         episode_info = {
             'loss': loss.item(),
